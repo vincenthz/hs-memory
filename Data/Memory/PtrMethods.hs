@@ -22,7 +22,7 @@ module Data.Memory.PtrMethods
 import           Data.Memory.Internal.Imports
 import           Foreign.Ptr              (Ptr, plusPtr)
 import           Foreign.Storable         (peek, poke, pokeByteOff, peekByteOff)
-import           Foreign.C.Types          (CSize(..))
+import           Foreign.C.Types
 import           Foreign.Marshal.Alloc    (allocaBytesAligned)
 import           Data.Bits                (xor)
 
