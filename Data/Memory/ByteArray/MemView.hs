@@ -1,3 +1,10 @@
+-- |
+-- Module      : Data.Memory.ByteArray.MemView
+-- License     : BSD-style
+-- Maintainer  : Vincent Hanquez <vincent@snarc.org>
+-- Stability   : stable
+-- Portability : Good
+--
 module Data.Memory.ByteArray.MemView
     ( MemView(..)
     ) where
