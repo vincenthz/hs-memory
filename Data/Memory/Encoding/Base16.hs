@@ -67,7 +67,7 @@ toHexadecimal bout bin n = loop 0
             | i == n  = return ()
             | otherwise = do
                 (W8# w) <- peekByteOff bin i
-                let (# w1, w2 #) = convertByte w
+                let !(# w1, w2 #) = convertByte w
                 pokeByteOff bout (i * 2)     (W8# w1)
                 pokeByteOff bout (i * 2 + 1) (W8# w2)
                 loop (i+1)

@@ -49,12 +49,9 @@ newScrubbedBytes (I# sz)
                     !mba      = ScrubbedBytes mbarr
                  in case mkWeak# mbarr () (scrubber (byteArrayContents# (unsafeCoerce# mbarr)) >> touchScrubbedBytes mba) s1 of
                     (# s2, _ #) -> (# s2, mba #)
-  where getScrubber :: Addr# -> IO ()
-        getScrubber
-            | booleanPrim (spares ==# 0#) = scrubber64 chunks
-            | otherwise                   = scrubber8 sz
-
-        (# chunks, spares #) = quotRemInt# sz 8#
+  where
+        getScrubber :: Addr# -> IO ()
+        getScrubber = eitherDivideBy8# sz scrubber64 scrubber8
 
         scrubber64 :: Int# -> Addr# -> IO ()
         scrubber64 sz64 addr = IO $ \s -> (# loop sz64 addr s, () #)
