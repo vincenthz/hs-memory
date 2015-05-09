@@ -59,11 +59,6 @@ bufCopy dst src n = c_memcpy dst src (fromIntegral n)
 -- | Set @n number of bytes to the same value @v
 bufSet :: Ptr Word8 -> Word8 -> Int -> IO ()
 bufSet start v n = c_memset start (fromIntegral v) (fromIntegral n) >>= \_ -> return ()
-    {-loop 0
-  where loop i
-            | i == n    = return ()
-            | otherwise = pokeByteOff start i v >> loop (i+1)
--}
 
 foreign import ccall unsafe "memset"
     c_memset :: Ptr Word8 -> Word8 -> CSize -> IO ()
