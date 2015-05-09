@@ -12,11 +12,11 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
 module Data.Memory.PtrMethods
-    ( bufCreateTemporary
-    , bufXor
-    , bufXorWith
-    , bufCopy
-    , bufSet
+    ( memCreateTemporary
+    , memXor
+    , memXorWith
+    , memCopy
+    , memSet
     , memEqual
     , memConstEqual
     , memCompare
@@ -30,25 +30,25 @@ import           Foreign.Marshal.Alloc    (allocaBytesAligned)
 import           Data.Bits                (xor)
 
 -- | Create a new temporary buffer
-bufCreateTemporary :: Int -> (Ptr Word8 -> IO a) -> IO a
-bufCreateTemporary size f = allocaBytesAligned size 8 f
+memCreateTemporary :: Int -> (Ptr Word8 -> IO a) -> IO a
+memCreateTemporary size f = allocaBytesAligned size 8 f
 
 -- | xor bytes from source1 and source2 to destination
 -- 
 -- d = s1 xor s2
 --
 -- s1, nor s2 are modified unless d point to s1 or s2
-bufXor :: Ptr Word8 -> Ptr Word8 -> Ptr Word8 -> Int -> IO ()
-bufXor _ _  _  0 = return ()
-bufXor d s1 s2 n = do
+memXor :: Ptr Word8 -> Ptr Word8 -> Ptr Word8 -> Int -> IO ()
+memXor _ _  _  0 = return ()
+memXor d s1 s2 n = do
     (xor <$> peek s1 <*> peek s2) >>= poke d
-    bufXor (d `plusPtr` 1) (s1 `plusPtr` 1) (s2 `plusPtr` 1) (n-1)
+    memXor (d `plusPtr` 1) (s1 `plusPtr` 1) (s2 `plusPtr` 1) (n-1)
 
 -- | xor bytes from source with a specific value to destination
 --
 -- d = replicate (sizeof s) v `xor` s
-bufXorWith :: Ptr Word8 -> Word8 -> Ptr Word8 -> Int -> IO ()
-bufXorWith d v s n = loop 0
+memXorWith :: Ptr Word8 -> Word8 -> Ptr Word8 -> Int -> IO ()
+memXorWith d v s n = loop 0
   where
     loop i
         | i == n    = return ()
@@ -57,12 +57,12 @@ bufXorWith d v s n = loop 0
             loop (i+1)
 
 -- | Copy a set number of bytes from @src to @dst
-bufCopy :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
-bufCopy dst src n = c_memcpy dst src (fromIntegral n)
+memCopy :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
+memCopy dst src n = c_memcpy dst src (fromIntegral n)
 
 -- | Set @n number of bytes to the same value @v
-bufSet :: Ptr Word8 -> Word8 -> Int -> IO ()
-bufSet start v n = c_memset start (fromIntegral v) (fromIntegral n) >>= \_ -> return ()
+memSet :: Ptr Word8 -> Word8 -> Int -> IO ()
+memSet start v n = c_memset start (fromIntegral v) (fromIntegral n) >>= \_ -> return ()
 
 memEqual :: Ptr Word8 -> Ptr Word8 -> Int -> IO Bool
 memEqual p1 p2 n = loop 0

@@ -58,7 +58,7 @@ xor a b =
     allocAndFreeze n $ \pc ->
     withByteArray a  $ \pa ->
     withByteArray b  $ \pb ->
-        bufXor pc pa pb n
+        memXor pc pa pb n
   where
         n  = min la lb
         la = length a
@@ -73,14 +73,14 @@ split n bs
     | n >= len  = (bs, empty)
     | otherwise = unsafeDoIO $ do
         withByteArray bs $ \p -> do
-            b1 <- alloc n $ \r -> bufCopy r p n
-            b2 <- alloc (len - n) $ \r -> bufCopy r (p `plusPtr` n) (len - n)
+            b1 <- alloc n $ \r -> memCopy r p n
+            b2 <- alloc (len - n) $ \r -> memCopy r (p `plusPtr` n) (len - n)
             return (b1, b2)
   where len = length bs
 
 take :: ByteArray bs => Int -> bs -> bs
 take n bs =
-    allocAndFreeze m $ \d -> withByteArray bs $ \s -> bufCopy d s m
+    allocAndFreeze m $ \d -> withByteArray bs $ \s -> memCopy d s m
   where
         m   = min len n
         len = length bs
@@ -94,45 +94,37 @@ concat allBs = allocAndFreeze total (loop allBs)
         loop []     _   = return ()
         loop (b:bs) dst = do
             let sz = length b
-            withByteArray b $ \p -> bufCopy dst p sz
+            withByteArray b $ \p -> memCopy dst p sz
             loop bs (dst `plusPtr` sz)
 
 copy :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> IO bs2
 copy bs f =
     alloc (length bs) $ \d -> do
-        withByteArray bs $ \s -> bufCopy d s (length bs)
+        withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
 copyRet :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO a) -> IO (a, bs2)
 copyRet bs f =
     allocRet (length bs) $ \d -> do
-        withByteArray bs $ \s -> bufCopy d s (length bs)
+        withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
 copyAndFreeze :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> bs2
 copyAndFreeze bs f =
     allocAndFreeze (length bs) $ \d -> do
-        withByteArray bs $ \s -> bufCopy d s (length bs)
+        withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
 zero :: ByteArray ba => Int -> ba
-zero n = allocAndFreeze n $ \ptr -> bufSet ptr 0 n
+zero n = allocAndFreeze n $ \ptr -> memSet ptr 0 n
 
 eq :: (ByteArrayAccess bs1, ByteArrayAccess bs2) => bs1 -> bs2 -> Bool
 eq b1 b2
     | l1 /= l2  = False
-    | otherwise = unsafeDoIO $
-        withByteArray b1 $ \p1 ->
-        withByteArray b2 $ \p2 ->
-            loop l1 p1 p2
+    | otherwise = unsafeDoIO $ withByteArray b1 $ \p1 -> withByteArray b2 $ \p2 -> memEqual p1 p2 l1
   where
     l1 = length b1
     l2 = length b2
-    loop :: Int -> Ptr Word8 -> Ptr Word8 -> IO Bool
-    loop 0 _  _  = return True
-    loop i p1 p2 = do
-        e <- (==) <$> peek p1 <*> peek p2
-        if e then loop (i-1) (p1 `plusPtr` 1) (p2 `plusPtr` 1) else return False
 
 -- | A constant time equality test for 2 ByteArrayAccess values.
 --
@@ -145,25 +137,10 @@ eq b1 b2
 constEq :: (ByteArrayAccess bs1, ByteArrayAccess bs2) => bs1 -> bs2 -> Bool
 constEq b1 b2
     | l1 /= l2  = False
-    | otherwise = unsafeDoIO $
-        withByteArray b1 $ \p1 ->
-        withByteArray b2 $ \p2 ->
-            loop l1 True p1 p2
+    | otherwise = unsafeDoIO $ withByteArray b1 $ \p1 -> withByteArray b2 $ \p2 -> memConstEqual p1 p2 l1
   where
     l1 = length b1
     l2 = length b2
-    loop :: Int -> Bool -> Ptr Word8 -> Ptr Word8 -> IO Bool
-    loop 0 !ret _  _  = return ret
-    loop i !ret p1 p2 = do
-        e <- (==) <$> peek p1 <*> peek p2
-        loop (i-1) (ret &&! e) (p1 `plusPtr` 1) (p2 `plusPtr` 1)
-
-    -- Bool == Bool
-    (&&!) :: Bool -> Bool -> Bool
-    True  &&! True  = True
-    True  &&! False = False
-    False &&! True  = False
-    False &&! False = False
 
 toW64BE :: ByteArrayAccess bs => bs -> Int -> Word64
 toW64BE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> fromBE64 <$> peek (p `plusPtr` ofs)
