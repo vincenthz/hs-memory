@@ -19,4 +19,4 @@ import           Data.Memory.ByteArray.Types         as X
 import           Data.Memory.ByteArray.Methods       as X
 import           Data.Memory.ByteArray.ScrubbedBytes as X (ScrubbedBytes)
 import           Data.Memory.ByteArray.Bytes         as X (Bytes)
-import           Data.Memory.ByteArray.MemView       as X (MemView)
+import           Data.Memory.ByteArray.MemView       as X (MemView(..))
