@@ -53,6 +53,7 @@ bufXorWith d v s n = loop 0
             (xor v <$> peekByteOff s i) >>= pokeByteOff d i
             loop (i+1)
 
+-- | Copy a set number of bytes from @src to @dst
 bufCopy :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
 bufCopy dst src n = c_memcpy dst src (fromIntegral n)
 
