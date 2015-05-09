@@ -142,11 +142,11 @@ constEq b1 b2
     l1 = length b1
     l2 = length b2
 
-toW64BE :: ByteArrayAccess bs => bs -> Int -> Word64
-toW64BE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> fromBE64 <$> peek (p `plusPtr` ofs)
+toW64BE :: ByteArrayAccess bs => bs -> Int -> BE Word64
+toW64BE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
 
-toW64LE :: ByteArrayAccess bs => bs -> Int -> Word64
-toW64LE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> fromLE64 <$> peek (p `plusPtr` ofs)
+toW64LE :: ByteArrayAccess bs => bs -> Int -> LE Word64
+toW64LE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
 
 mapAsWord128 :: ByteArray bs => (Word128 -> Word128) -> bs -> bs
 mapAsWord128 f bs =
@@ -155,13 +155,14 @@ mapAsWord128 f bs =
         loop (len `div` 16) dst src
   where
         len        = length bs
+        loop :: Int -> Ptr (BE Word64) -> Ptr (BE Word64) -> IO ()
         loop 0 _ _ = return ()
         loop i d s = do
             w1 <- peek s
             w2 <- peek (s `plusPtr` 8)
-            let (Word128 r1 r2) = f (Word128 (fromBE64 w1) (fromBE64 w2))
-            poke d               (toBE64 r1)
-            poke (d `plusPtr` 8) (toBE64 r2)
+            let (Word128 r1 r2) = f (Word128 (fromBE w1) (fromBE w2))
+            poke d               (toBE r1)
+            poke (d `plusPtr` 8) (toBE r2)
             loop (i-1) (d `plusPtr` 16) (s `plusPtr` 16)
 
 mapAsWord64 :: ByteArray bs => (Word64 -> Word64) -> bs -> bs
@@ -171,11 +172,13 @@ mapAsWord64 f bs =
         loop (len `div` 8) dst src
   where
         len        = length bs
+
+        loop :: Int -> Ptr (BE Word64) -> Ptr (BE Word64) -> IO ()
         loop 0 _ _ = return ()
         loop i d s = do
             w <- peek s
-            let r = f (fromBE64 w)
-            poke d (toBE64 r)
+            let r = f (fromBE w)
+            poke d (toBE r)
             loop (i-1) (d `plusPtr` 8) (s `plusPtr` 8)
 
 convert :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout
