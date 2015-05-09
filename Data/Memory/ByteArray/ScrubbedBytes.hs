@@ -17,6 +17,8 @@ import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
 import           Data.Memory.Internal.CompatPrim
+import           Data.Memory.Internal.Compat     (unsafeDoIO)
+import           Data.Memory.PtrMethods          (memConstEqual)
 import           Data.Memory.ByteArray.Types
 
 -- | ScrubbedBytes is a memory chunk which have the properties of:
@@ -31,6 +33,9 @@ data ScrubbedBytes = ScrubbedBytes (MutableByteArray# RealWorld)
 
 instance Show ScrubbedBytes where
     show _ = "<scrubbed-bytes>"
+
+instance Eq ScrubbedBytes where
+    (==) = scrubbedBytesEq
 
 instance ByteArrayAccess ScrubbedBytes where
     length        = sizeofScrubbedBytes
@@ -88,3 +93,11 @@ withPtr b@(ScrubbedBytes mba) f = do
 
 touchScrubbedBytes :: ScrubbedBytes -> IO ()
 touchScrubbedBytes (ScrubbedBytes mba) = IO $ \s -> case touch# mba s of s' -> (# s', () #)
+
+scrubbedBytesEq :: ScrubbedBytes -> ScrubbedBytes -> Bool
+scrubbedBytesEq a b
+    | l1 /= l2  = False
+    | otherwise = unsafeDoIO $ withPtr a $ \p1 -> withPtr b $ \p2 -> memConstEqual p1 p2 l1
+  where
+        l1 = sizeofScrubbedBytes a
+        l2 = sizeofScrubbedBytes b
