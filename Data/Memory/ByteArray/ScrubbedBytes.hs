@@ -19,7 +19,7 @@ import           GHC.Ptr
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.ByteArray.Types
 
--- | SecureMem is a memory chunk which have the properties of:
+-- | ScrubbedBytes is a memory chunk which have the properties of:
 --
 -- * Being scrubbed after its goes out of scope.
 --
