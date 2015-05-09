@@ -17,6 +17,9 @@ module Data.Memory.PtrMethods
     , bufXorWith
     , bufCopy
     , bufSet
+    , memEqual
+    , memConstEqual
+    , memCompare
     ) where
 
 import           Data.Memory.Internal.Imports
@@ -60,6 +63,45 @@ bufCopy dst src n = c_memcpy dst src (fromIntegral n)
 -- | Set @n number of bytes to the same value @v
 bufSet :: Ptr Word8 -> Word8 -> Int -> IO ()
 bufSet start v n = c_memset start (fromIntegral v) (fromIntegral n) >>= \_ -> return ()
+
+memEqual :: Ptr Word8 -> Ptr Word8 -> Int -> IO Bool
+memEqual p1 p2 n = loop 0
+  where
+    loop i
+        | i == n    = return True
+        | otherwise = do
+            e <- (==) <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
+            if e then loop (i+1) else return False
+
+memCompare :: Ptr Word8 -> Ptr Word8 -> Int -> IO Ordering
+memCompare p1 p2 n = loop 0
+  where
+    loop i
+        | i == n    = return EQ
+        | otherwise = do
+            e <- compare <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
+            if e == EQ then loop (i+1) else return e
+
+-- | A constant time equality test for 2 Memory buffers
+--
+-- compared to normal equality function, this function will go
+-- over all the bytes present before yielding a result even when
+-- knowing the overall result early in the processing.
+memConstEqual :: Ptr Word8 -> Ptr Word8 -> Int -> IO Bool
+memConstEqual p1 p2 n = loop 0 True
+  where
+    loop i !ret
+        | i == n    = return ret
+        | otherwise = do
+            e <- (==) <$> peek p1 <*> peek p2
+            loop (i+1) (ret &&! e)
+
+    -- Bool == Bool
+    (&&!) :: Bool -> Bool -> Bool
+    True  &&! True  = True
+    True  &&! False = False
+    False &&! True  = False
+    False &&! False = False
 
 foreign import ccall unsafe "memset"
     c_memset :: Ptr Word8 -> Word8 -> CSize -> IO ()
