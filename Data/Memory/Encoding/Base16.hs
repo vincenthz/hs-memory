@@ -46,7 +46,7 @@ showHexadecimal withPtr = doChunks 0
         doUnique ofs len
             | len == 0  = []
             | otherwise =
-                let !(W8# b)     = unsafeDoIO $ withPtr (byteIndex ofs)
+                let !(W8# b)      = unsafeDoIO $ withPtr (byteIndex ofs)
                     !(# w1, w2 #) = convertByte b
                  in wToChar w1 : wToChar w2 : doUnique (ofs + 1) (len - 1)
 
