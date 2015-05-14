@@ -7,6 +7,8 @@
 --
 -- Simple and efficient byte array types
 --
+-- This module should be imported qualified.
+--
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
