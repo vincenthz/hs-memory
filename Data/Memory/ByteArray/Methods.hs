@@ -24,6 +24,7 @@ module Data.Memory.ByteArray.Methods
     , index
     , eq
     , constEq
+    , append
     , concat
     , toW64BE
     , toW64LE
@@ -106,6 +107,9 @@ concat allBs = allocAndFreeze total (loop allBs)
             let sz = length b
             withByteArray b $ \p -> memCopy dst p sz
             loop bs (dst `plusPtr` sz)
+
+append :: ByteArray bs => bs -> bs -> bs
+append b1 b2 = concat [b1,b2]
 
 copy :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> IO bs2
 copy bs f =
