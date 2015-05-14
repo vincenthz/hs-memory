@@ -37,9 +37,11 @@ instance ByteArray Bytes where
 
 ------------------------------------------------------------------------
 newBytes :: Int -> IO Bytes
-newBytes (I# sz) = IO $ \s ->
-    case newAlignedPinnedByteArray# sz 8# s of
-        (# s', mbarr #) -> (# s', Bytes mbarr #)
+newBytes (I# sz)
+    | booleanPrim (sz <# 0#) = error "Bytes: size must be >= 0"
+    | otherwise              = IO $ \s ->
+        case newAlignedPinnedByteArray# sz 8# s of
+            (# s', mbarr #) -> (# s', Bytes mbarr #)
 
 touchBytes :: Bytes -> IO ()
 touchBytes (Bytes mba) = IO $ \s -> case touch# mba s of s' -> (# s', () #)
