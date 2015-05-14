@@ -42,7 +42,7 @@ import           Data.Memory.Encoding.Base16
 import           Foreign.Storable
 import           Foreign.Ptr
 
-import           Prelude hiding (length, take, concat)
+import           Prelude hiding (length, take, concat, replicate)
 
 alloc :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
 alloc n f = snd `fmap` allocRet n f
@@ -66,7 +66,7 @@ empty = unsafeDoIO (alloc 0 $ \_ -> return ())
 -- the returns byte array is the size of the smallest input.
 xor :: (ByteArrayAccess a, ByteArrayAccess b, ByteArray c) => a -> b -> c
 xor a b =
-    allocAndFreeze n $ \pc ->
+    unsafeCreate n $ \pc ->
     withByteArray a  $ \pa ->
     withByteArray b  $ \pb ->
         memXor pc pa pb n
@@ -91,14 +91,14 @@ split n bs
 
 take :: ByteArray bs => Int -> bs -> bs
 take n bs =
-    allocAndFreeze m $ \d -> withByteArray bs $ \s -> memCopy d s m
+    unsafeCreate m $ \d -> withByteArray bs $ \s -> memCopy d s m
   where
         m   = min len n
         len = length bs
 
 concat :: ByteArray bs => [bs] -> bs
 concat []    = empty
-concat allBs = allocAndFreeze total (loop allBs)
+concat allBs = unsafeCreate total (loop allBs)
   where
         total = sum $ map length allBs
 
@@ -125,7 +125,7 @@ copyRet bs f =
 
 copyAndFreeze :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> bs2
 copyAndFreeze bs f =
-    allocAndFreeze (length bs) $ \d -> do
+    unsafeCreate (length bs) $ \d -> do
         withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
@@ -171,8 +171,8 @@ toW64LE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
 
 mapAsWord128 :: ByteArray bs => (Word128 -> Word128) -> bs -> bs
 mapAsWord128 f bs =
-    allocAndFreeze len $ \dst ->
-    withByteArray bs   $ \src ->
+    unsafeCreate len $ \dst ->
+    withByteArray bs $ \src ->
         loop (len `div` 16) dst src
   where
         len        = length bs
@@ -188,8 +188,8 @@ mapAsWord128 f bs =
 
 mapAsWord64 :: ByteArray bs => (Word64 -> Word64) -> bs -> bs
 mapAsWord64 f bs =
-    allocAndFreeze len $ \dst ->
-    withByteArray bs            $ \src ->
+    unsafeCreate len $ \dst ->
+    withByteArray bs $ \src ->
         loop (len `div` 8) dst src
   where
         len        = length bs
@@ -207,6 +207,6 @@ convert = flip copyAndFreeze (\_ -> return ())
 
 convertHex :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout
 convertHex b =
-    allocAndFreeze (length b * 2) $ \bout ->
-    withByteArray b               $ \bin  ->
+    unsafeCreate (length b * 2) $ \bout ->
+    withByteArray b             $ \bin  ->
         toHexadecimal bout bin (length b)
