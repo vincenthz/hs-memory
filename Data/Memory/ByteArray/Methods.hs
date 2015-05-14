@@ -12,6 +12,7 @@ module Data.Memory.ByteArray.Methods
     , create
     , unsafeCreate
     , empty
+    , replicate
     , zero
     , copy
     , take
