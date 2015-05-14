@@ -129,8 +129,15 @@ copyAndFreeze bs f =
         withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
+replicate :: ByteArray ba => Int -> Word8 -> ba
+replicate 0 _ = empty
+replicate n b = unsafeCreate n $ \ptr -> memSet ptr b n
+{-# NOINLINE replicate #-}
+
 zero :: ByteArray ba => Int -> ba
-zero n = allocAndFreeze n $ \ptr -> memSet ptr 0 n
+zero 0 = empty
+zero n = unsafeCreate n $ \ptr -> memSet ptr 0 n
+{-# NOINLINE zero #-}
 
 eq :: (ByteArrayAccess bs1, ByteArrayAccess bs2) => bs1 -> bs2 -> Bool
 eq b1 b2
