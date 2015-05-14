@@ -4,8 +4,8 @@ module Main where
 
 import           Imports
 import           Data.Word
-import           Data.Memory.ByteArray      (Bytes, ScrubbedBytes, ByteArray)
-import qualified Data.Memory.ByteArray as B
+import           Data.ByteArray      (Bytes, ScrubbedBytes, ByteArray)
+import qualified Data.ByteArray as B
 
 -- | similar to proxy
 data Witness a = Witness

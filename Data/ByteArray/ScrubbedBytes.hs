@@ -1,5 +1,5 @@
 -- |
--- Module      : Data.Memory.ByteArray.ScrubbedBytes
+-- Module      : Data.ByteArray.ScrubbedBytes
 -- License     : BSD-style
 -- Maintainer  : Vincent Hanquez <vincent@snarc.org>
 -- Stability   : Stable
@@ -9,7 +9,7 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE CPP #-}
-module Data.Memory.ByteArray.ScrubbedBytes
+module Data.ByteArray.ScrubbedBytes
     ( ScrubbedBytes
     ) where
 
@@ -19,7 +19,7 @@ import           GHC.Ptr
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
 import           Data.Memory.PtrMethods          (memConstEqual)
-import           Data.Memory.ByteArray.Types
+import           Data.ByteArray.Types
 
 -- | ScrubbedBytes is a memory chunk which have the properties of:
 --

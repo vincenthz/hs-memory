@@ -26,7 +26,7 @@ Flag support_bytestring
   Manual:            True
 
 Library
-  Exposed-modules:   Data.Memory.ByteArray
+  Exposed-modules:   Data.ByteArray
                      Data.Memory.Endian
                      Data.Memory.PtrMethods
                      Data.Memory.ExtendedWords
@@ -34,11 +34,11 @@ Library
   Other-modules:     Data.Memory.Internal.Compat
                      Data.Memory.Internal.CompatPrim
                      Data.Memory.Internal.Imports
-                     Data.Memory.ByteArray.Types
-                     Data.Memory.ByteArray.Bytes
-                     Data.Memory.ByteArray.ScrubbedBytes
-                     Data.Memory.ByteArray.Methods
-                     Data.Memory.ByteArray.MemView
+                     Data.ByteArray.Types
+                     Data.ByteArray.Bytes
+                     Data.ByteArray.ScrubbedBytes
+                     Data.ByteArray.Methods
+                     Data.ByteArray.MemView
   Build-depends:     base >= 4 && < 5
                    , ghc-prim
   -- FIXME armel or mispel is also little endian.

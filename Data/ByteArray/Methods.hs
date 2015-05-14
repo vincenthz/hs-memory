@@ -1,12 +1,12 @@
 -- |
--- Module      : Data.Memory.ByteArray.Methods
+-- Module      : Data.ByteArray.Methods
 -- License     : BSD-style
 -- Maintainer  : Vincent Hanquez <vincent@snarc.org>
 -- Stability   : stable
 -- Portability : Good
 --
 {-# LANGUAGE BangPatterns #-}
-module Data.Memory.ByteArray.Methods
+module Data.ByteArray.Methods
     ( alloc
     , allocAndFreeze
     , create
@@ -37,7 +37,7 @@ module Data.Memory.ByteArray.Methods
 
 import           Data.Memory.Internal.Compat
 import           Data.Memory.Internal.Imports hiding (empty)
-import           Data.Memory.ByteArray.Types
+import           Data.ByteArray.Types
 import           Data.Memory.Endian
 import           Data.Memory.PtrMethods
 import           Data.Memory.ExtendedWords
