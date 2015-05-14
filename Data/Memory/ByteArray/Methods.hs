@@ -11,6 +11,8 @@ module Data.Memory.ByteArray.Methods
     , allocAndFreeze
     , create
     , unsafeCreate
+    , pack
+    , unpack
     , empty
     , replicate
     , zero
@@ -44,6 +46,7 @@ import           Foreign.Storable
 import           Foreign.Ptr
 
 import           Prelude hiding (length, take, concat, replicate)
+import qualified Prelude
 
 alloc :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
 alloc n f = snd `fmap` allocRet n f
@@ -61,6 +64,22 @@ unsafeCreate sz f = unsafeDoIO (alloc sz f)
 
 empty :: ByteArray a => a
 empty = unsafeDoIO (alloc 0 $ \_ -> return ())
+
+-- | Pack a list of bytes into a bytearray
+pack :: ByteArray a => [Word8] -> a
+pack l = unsafeCreate (Prelude.length l) (fill 0 l)
+  where fill _ []     _ = return ()
+        fill i (x:xs) p = pokeByteOff p i x >> fill (i+1) xs p
+
+-- | Un-pack a bytearray into a list of bytes
+unpack :: ByteArrayAccess a => a -> [Word8]
+unpack bs = loop 0
+  where !len = length bs
+        loop i
+            | i == len  = []
+            | otherwise =
+                let !v = unsafeDoIO $ withByteArray bs (\p -> peekByteOff p i)
+                 in v : loop (i+1)
 
 -- | Create a xor of bytes between a and b.
 --
