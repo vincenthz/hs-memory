@@ -9,6 +9,8 @@
 module Data.Memory.ByteArray.Methods
     ( alloc
     , allocAndFreeze
+    , create
+    , unsafeCreate
     , empty
     , zero
     , copy
@@ -44,8 +46,16 @@ import           Prelude hiding (length, take, concat)
 alloc :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
 alloc n f = snd `fmap` allocRet n f
 
+create :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
+create n f = alloc n f
+
 allocAndFreeze :: ByteArray a => Int -> (Ptr p -> IO ()) -> a
 allocAndFreeze sz f = unsafeDoIO (alloc sz f)
+{-# NOINLINE allocAndFreeze #-}
+
+unsafeCreate :: ByteArray a => Int -> (Ptr p -> IO ()) -> a
+unsafeCreate sz f = unsafeDoIO (alloc sz f)
+{-# NOINLINE unsafeCreate #-}
 
 empty :: ByteArray a => a
 empty = unsafeDoIO (alloc 0 $ \_ -> return ())
