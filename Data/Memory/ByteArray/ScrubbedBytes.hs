@@ -46,7 +46,10 @@ instance ByteArray ScrubbedBytes where
 
 newScrubbedBytes :: Int -> IO ScrubbedBytes
 newScrubbedBytes (I# sz)
-    | booleanPrim (sz <=# 0#) = error "negative or null size for scrubbed array" -- TODO raise a proper exception
+    | booleanPrim (sz <# 0#)  = error "ScrubbedBytes: size must be >= 0"
+    | booleanPrim (sz ==# 0#) = IO $ \s ->
+        case newAlignedPinnedByteArray# 0# 8# s of
+            (# s2, mba #) -> (# s2, ScrubbedBytes mba #)
     | otherwise               = IO $ \s ->
         case newAlignedPinnedByteArray# sz 8# s of
             (# s1, mbarr #) ->
