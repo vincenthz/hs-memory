@@ -19,8 +19,8 @@ module Data.Memory.ByteArray.Methods
     , copyAndFreeze
     , split
     , xor
-    , eq
     , index
+    , eq
     , constEq
     , concat
     , toW64BE
