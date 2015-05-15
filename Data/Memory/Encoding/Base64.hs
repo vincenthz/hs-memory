@@ -52,7 +52,7 @@ convert3 (W8# a) (W8# b) (W8# c) =
         !z = and# c 0x3f##
      in (index w, index x, index y, index z)
   where
-        set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"#
+        !set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"#
 
         index :: Word# -> Word8
         index idx = W8# (indexWord8OffAddr# set (word2Int# idx))
