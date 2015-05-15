@@ -13,16 +13,20 @@ module Data.ByteArray.Methods
     , unsafeCreate
     , pack
     , unpack
+    , uncons
     , empty
+    , null
     , replicate
     , zero
     , copy
     , take
+    , drop
+    , span
     , convert
     , convertHex
     , copyRet
     , copyAndFreeze
-    , split
+    , splitAt
     , xor
     , index
     , eq
@@ -45,7 +49,7 @@ import           Data.Memory.Encoding.Base16
 import           Foreign.Storable
 import           Foreign.Ptr
 
-import           Prelude hiding (length, take, concat, replicate)
+import           Prelude hiding (length, take, drop, span, concat, replicate, splitAt, null, pred)
 import qualified Prelude
 
 alloc :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
@@ -62,8 +66,13 @@ unsafeCreate :: ByteArray a => Int -> (Ptr p -> IO ()) -> a
 unsafeCreate sz f = unsafeDoIO (alloc sz f)
 {-# NOINLINE unsafeCreate #-}
 
+-- | Create an empty byte array
 empty :: ByteArray a => a
 empty = unsafeDoIO (alloc 0 $ \_ -> return ())
+
+-- | Check if a byte array is empty
+null :: ByteArray a => a -> Bool
+null b = length b == 0
 
 -- | Pack a list of bytes into a bytearray
 pack :: ByteArray a => [Word8] -> a
@@ -80,6 +89,11 @@ unpack bs = loop 0
             | otherwise =
                 let !v = unsafeDoIO $ withByteArray bs (\p -> peekByteOff p i)
                  in v : loop (i+1)
+
+uncons :: ByteArray a => a -> Maybe (Word8, a)
+uncons a
+    | null a    = Nothing
+    | otherwise = Just (index a 0, drop 1 a)
 
 -- | Create a xor of bytes between a and b.
 --
@@ -98,8 +112,8 @@ xor a b =
 index :: ByteArrayAccess a => a -> Int -> Word8
 index b i = unsafeDoIO $ withByteArray b $ \p -> peek (p `plusPtr` i)
 
-split :: ByteArray bs => Int -> bs -> (bs, bs)
-split n bs
+splitAt :: ByteArray bs => Int -> bs -> (bs, bs)
+splitAt n bs
     | n <= 0    = (empty, bs)
     | n >= len  = (bs, empty)
     | otherwise = unsafeDoIO $ do
@@ -110,11 +124,30 @@ split n bs
   where len = length bs
 
 take :: ByteArray bs => Int -> bs -> bs
-take n bs =
-    unsafeCreate m $ \d -> withByteArray bs $ \s -> memCopy d s m
+take n bs
+    | n <= 0    = empty
+    | otherwise = unsafeCreate m $ \d -> withByteArray bs $ \s -> memCopy d s m
   where
-        m   = min len n
-        len = length bs
+    m   = min len n
+    len = length bs
+
+drop :: ByteArray bs => Int -> bs -> bs
+drop n bs
+    | n  < 0    = bs
+    | nb == 0   = empty
+    | otherwise = unsafeCreate nb $ \d -> withByteArray bs $ \s -> memCopy d (s `plusPtr` ofs) nb
+  where
+    ofs = min len n
+    nb  = len - ofs
+    len = length bs
+
+span :: ByteArray bs => (Word8 -> Bool) -> bs -> (bs, bs)
+span pred bs
+    | null bs   = (bs, bs)
+    | otherwise = let n = loop 0 in (take n bs, drop n bs)
+  where loop !i
+            | pred (index bs i) = loop (i+1)
+            | otherwise         = i
 
 concat :: ByteArray bs => [bs] -> bs
 concat []    = empty
