@@ -3,22 +3,12 @@
 module Main where
 
 import           Imports
+import           Utils
 import           Data.Word
 import           Data.ByteArray               (Bytes, ScrubbedBytes, ByteArray)
 import qualified Data.ByteArray          as B
 import qualified Data.ByteArray.Encoding as B
-
--- | similar to proxy
-data Witness a = Witness
-
-withWitness :: Witness a -> a -> a
-withWitness _ a = a
-
-withBytesWitness :: Bytes -> Bytes
-withBytesWitness = withWitness (Witness :: Witness Bytes)
-
-withScrubbedBytesWitness :: ScrubbedBytes -> ScrubbedBytes
-withScrubbedBytesWitness = id
+import qualified Data.ByteArray.Parse    as Parse
 
 data Backend = BackendByte | BackendScrubbedBytes
     deriving (Show,Eq,Bounded,Enum)
@@ -73,18 +63,27 @@ encodingTests witnessID =
     ]
   where kats = map toTest $ zip [1..] base64Kats
 
-        unS :: String -> [Word8]
-        unS = map (fromIntegral . fromEnum)
-        
         toTest :: (Int, (String, String)) -> TestTree
         toTest (i, (inp, out)) = testCase (show i) $
             let inpbs = witnessID $ B.convertToBase B.Base64 $ witnessID $ B.pack $ unS inp
                 outbs = witnessID $ B.pack $ unS out
              in outbs @=? inpbs
 
+parsingTests witnessID =
+    [ testCase "parse" $
+        let input = witnessID $ B.pack $ unS "xx abctest"
+            abc   = witnessID $ B.pack $ unS "abc"
+            est   = witnessID $ B.pack $ unS "est"
+            result = Parse.parse ((,,) <$> Parse.take 2 <*> Parse.byte 0x20 <*> (Parse.bytes abc *> Parse.anyByte)) input
+         in case result of
+                Parse.ParseOK remaining (_,_,_) -> est @=? remaining
+                _                               -> assertFailure ""
+    ]
+
 main = defaultMain $ testGroup "memory"
     [ localOption (QuickCheckTests 500) $ testGroupBackends "basic" basicProperties
     , testGroupBackends "encoding" encodingTests
+    , testGroupBackends "parsing" parsingTests
     ]
   where
     basicProperties witnessID =

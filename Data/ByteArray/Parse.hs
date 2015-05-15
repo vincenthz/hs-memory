@@ -9,7 +9,7 @@
 --
 -- Simple example:
 --
--- > > parse ((,) <$> take 2 <*> byte 0x20 <*> (bytes "abc" *> anyByte)) "xx abctest"
+-- > > parse ((,,) <$> take 2 <*> byte 0x20 <*> (bytes "abc" *> anyByte)) "xx abctest"
 -- > ParseOK "est" ("xx", 116)
 --
 {-# LANGUAGE Rank2Types #-}
