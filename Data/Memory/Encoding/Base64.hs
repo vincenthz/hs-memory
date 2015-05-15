@@ -16,7 +16,7 @@ module Data.Memory.Encoding.Base64
     ( toBase64
     ) where
 
-import           Data.Memory.Internal.Compat
+import           Data.Memory.Internal.Compat ()
 import           Data.Word
 import           GHC.Prim
 import           GHC.Word

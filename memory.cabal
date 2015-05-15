@@ -25,6 +25,11 @@ Flag support_bytestring
   Default:           True
   Manual:            True
 
+Flag support_deepseq
+  Description:       add deepseq instances for memory types
+  Default:           True
+  Manual:            True
+
 Library
   Exposed-modules:   Data.ByteArray
                      Data.ByteArray.Encoding
@@ -54,6 +59,9 @@ Library
   if flag(support_bytestring)
     CPP-options:     -DWITH_BYTESTRING_SUPPORT
     Build-depends:   bytestring
+  if flag(support_deepseq)
+    CPP-options:     -DWITH_DEEPSEQ_SUPPORT
+    Build-depends:   deepseq
 
   ghc-options:       -Wall -fwarn-tabs
   default-language:  Haskell2010
