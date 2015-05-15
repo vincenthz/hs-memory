@@ -19,10 +19,14 @@ import qualified Data.ByteString.Internal as B
 import           Foreign.ForeignPtr (withForeignPtr)
 #endif
 
+-- | Class to Access size properties and data of a ByteArray
 class ByteArrayAccess ba where
+    -- | Return the length in bytes of a bytearray
     length        :: ba -> Int
+    -- | Allow to use using a pointer
     withByteArray :: ba -> (Ptr p -> IO a) -> IO a
 
+-- | Class to allocate new ByteArray of specific size
 class ByteArrayAccess ba => ByteArray ba where
     allocRet  :: Int -> (Ptr p -> IO a) -> IO (a, ba)
 

@@ -22,6 +22,7 @@ import           Data.Memory.Internal.Compat      (unsafeDoIO)
 import           Data.Memory.Encoding.Base16      (showHexadecimal)
 import           Data.ByteArray.Types
 
+-- | Simplest Byte Array
 data Bytes = Bytes (MutableByteArray# RealWorld)
 
 instance Show Bytes where

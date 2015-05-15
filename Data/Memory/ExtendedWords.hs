@@ -13,4 +13,5 @@ module Data.Memory.ExtendedWords
 
 import Data.Word (Word64)
 
+-- | A simple Extended Word128 composed of 2 Word64
 data Word128 = Word128 !Word64 !Word64 deriving (Show, Eq)
