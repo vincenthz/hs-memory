@@ -28,6 +28,8 @@ convertToBase Base16 b =
     B.withByteArray b               $ \bin  ->
         toHexadecimal bout bin (B.length b)
 convertToBase Base64 b =
-    B.unsafeCreate (B.length b * 4 `div` 3) $ \bout ->
-    withByteArray b                         $ \bin  ->
+    B.unsafeCreate outLen $ \bout ->
+    withByteArray b       $ \bin  ->
         toBase64 bout bin (B.length b)
+  where (q,r)  = B.length b `divMod` 3
+        outLen = 4 * (if r == 0 then q else q+1)
