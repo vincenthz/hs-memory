@@ -16,6 +16,8 @@ module Data.ByteArray.ScrubbedBytes
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
+import           Data.Monoid
+import           Data.Memory.PtrMethods          (memCopy)
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
 import           Data.Memory.PtrMethods          (memConstEqual)
@@ -36,6 +38,12 @@ instance Show ScrubbedBytes where
 
 instance Eq ScrubbedBytes where
     (==) = scrubbedBytesEq
+instance Ord ScrubbedBytes where
+    compare = scrubbedBytesCompare
+instance Monoid ScrubbedBytes where
+    mempty        = unsafeDoIO (newScrubbedBytes 0)
+    mappend b1 b2 = unsafeDoIO $ scrubbedBytesAppend b1 b2
+    mconcat       = unsafeDoIO . scrubbedBytesConcat
 
 instance ByteArrayAccess ScrubbedBytes where
     length        = sizeofScrubbedBytes
@@ -85,6 +93,34 @@ scrubbedBytesAllocRet sz f = do
     r  <- withPtr ba f
     return (r, ba)
 
+scrubbedBytesAlloc :: Int -> (Ptr p -> IO ()) -> IO ScrubbedBytes
+scrubbedBytesAlloc sz f = do
+    ba <- newScrubbedBytes sz
+    withPtr ba f
+    return ba
+
+scrubbedBytesConcat :: [ScrubbedBytes] -> IO ScrubbedBytes
+scrubbedBytesConcat l = scrubbedBytesAlloc retLen (copy l)
+  where
+    retLen = sum $ map sizeofScrubbedBytes l
+
+    copy []     _   = return ()
+    copy (x:xs) dst = do
+        withPtr x $ \src -> memCopy dst src chunkLen
+        copy xs (dst `plusPtr` chunkLen)
+      where
+        chunkLen = sizeofScrubbedBytes x
+
+scrubbedBytesAppend :: ScrubbedBytes -> ScrubbedBytes -> IO ScrubbedBytes
+scrubbedBytesAppend b1 b2 = scrubbedBytesAlloc retLen $ \dst -> do
+    withPtr b1 $ \s1 -> memCopy dst                  s1 len1
+    withPtr b2 $ \s2 -> memCopy (dst `plusPtr` len1) s2 len2
+  where
+    len1   = sizeofScrubbedBytes b1
+    len2   = sizeofScrubbedBytes b2
+    retLen = len1 + len2
+
+
 sizeofScrubbedBytes :: ScrubbedBytes -> Int
 sizeofScrubbedBytes (ScrubbedBytes mba) = I# (sizeofMutableByteArray# mba)
 
@@ -104,3 +140,25 @@ scrubbedBytesEq a b
   where
         l1 = sizeofScrubbedBytes a
         l2 = sizeofScrubbedBytes b
+
+scrubbedBytesCompare :: ScrubbedBytes -> ScrubbedBytes -> Ordering
+scrubbedBytesCompare b1@(ScrubbedBytes m1) b2@(ScrubbedBytes m2) = unsafeDoIO $ IO $ \s -> loop 0# s
+  where
+    !l1       = sizeofScrubbedBytes b1
+    !l2       = sizeofScrubbedBytes b2
+    !(I# len) = min l1 l2
+
+    loop i s1
+        | booleanPrim (i ==# len) =
+            if l1 == l2
+                then (# s1, EQ #)
+                else if l1 > l2 then (# s1, GT #)
+                                else (# s1, LT #)
+        | otherwise               =
+            case readWord8Array# m1 i s1 of
+                (# s2, e1 #) -> case readWord8Array# m2 i s2 of
+                    (# s3, e2 #) ->
+                        if booleanPrim (eqWord# e1 e2)
+                            then loop (i +# 1#) s3
+                            else if booleanPrim (ltWord# e1 e2) then (# s3, LT #)
+                                                                else (# s3, GT #)

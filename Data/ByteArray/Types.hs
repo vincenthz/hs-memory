@@ -12,6 +12,7 @@ module Data.ByteArray.Types
     ) where
 
 import           Foreign.Ptr
+import           Data.Monoid
 
 #ifdef WITH_BYTESTRING_SUPPORT
 import qualified Data.ByteString as B (length)
@@ -27,7 +28,7 @@ class ByteArrayAccess ba where
     withByteArray :: ba -> (Ptr p -> IO a) -> IO a
 
 -- | Class to allocate new ByteArray of specific size
-class ByteArrayAccess ba => ByteArray ba where
+class (Eq ba, Ord ba, Monoid ba, ByteArrayAccess ba) => ByteArray ba where
     allocRet  :: Int -> (Ptr p -> IO a) -> IO (a, ba)
 
 #ifdef WITH_BYTESTRING_SUPPORT

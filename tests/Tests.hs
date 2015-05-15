@@ -95,6 +95,12 @@ main = defaultMain $ testGroup "memory"
         , testProperty "zero" $ \(Positive n) ->
             let expected = witnessID $ B.pack $ replicate n 0
              in expected == B.zero n
+        , testProperty "Ord" $ \(Words8 l1) (Words8 l2) ->
+            compare l1 l2 == compare (witnessID $ B.pack l1) (B.pack l2)
+        , testProperty "Monoid(mappend)" $ \(Words8 l1) (Words8 l2) ->
+            mappend l1 l2 == (B.unpack $ mappend (witnessID $ B.pack l1) (B.pack l2))
+        , testProperty "Monoid(mconcat)" $ \(SmallList l) ->
+            mconcat (map unWords8 l) == (B.unpack $ mconcat $ map (witnessID . B.pack . unWords8) l)
         , testProperty "append (append a b) c == append a (append b c)" $ \(Words8 la) (Words8 lb) (Words8 lc) ->
             let a = witnessID $ B.pack la
                 b = witnessID $ B.pack lb
@@ -105,5 +111,3 @@ main = defaultMain $ testGroup "memory"
                 expected = concatMap unWords8 l
              in B.pack expected == B.concat chunks
         ]
-
-

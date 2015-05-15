@@ -17,6 +17,8 @@ module Data.ByteArray.Bytes
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
+import           Data.Monoid
+import           Data.Memory.PtrMethods
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat      (unsafeDoIO)
 import           Data.Memory.Encoding.Base16      (showHexadecimal)
@@ -29,6 +31,12 @@ instance Show Bytes where
     show = bytesShowHex
 instance Eq Bytes where
     (==) = bytesEq
+instance Ord Bytes where
+    compare = bytesCompare
+instance Monoid Bytes where
+    mempty        = unsafeDoIO (newBytes 0)
+    mappend b1 b2 = unsafeDoIO $ bytesAppend b1 b2
+    mconcat       = unsafeDoIO . bytesConcat
 
 instance ByteArrayAccess Bytes where
     length        = bytesLength
@@ -57,31 +65,32 @@ withPtr b@(Bytes mba) f = do
     return a
 ------------------------------------------------------------------------
 
-{-
-bytesCopyAndModify :: Bytes -> (Ptr a -> IO ()) -> IO Bytes
-bytesCopyAndModify src f = do
-    dst <- newBytes sz
-    withPtr dst $ \d -> do
-        withPtr src $ \s -> copyBytes (castPtr d) s sz
-        f d
-    return dst
-  where sz = sizeofBytes src
-
-bytesTemporary :: Int -> (Ptr p -> IO a) -> IO a
-bytesTemporary sz f = newBytes sz >>= \ba -> withPtr ba f
-
-bytesCopyTemporary :: Bytes -> (Ptr p -> IO a) -> IO a
-bytesCopyTemporary src f = do
-    dst <- newBytes (sizeofBytes src)
-    withPtr dst $ \d -> do
-        withPtr src $ \s -> copyBytes (castPtr d) s (sizeofBytes src)
-        f d
 bytesAlloc :: Int -> (Ptr p -> IO ()) -> IO Bytes
 bytesAlloc sz f = do
     ba <- newBytes sz
     withPtr ba f
     return ba
--}
+
+bytesConcat :: [Bytes] -> IO Bytes
+bytesConcat l = bytesAlloc retLen (copy l)
+  where
+    retLen = sum $ map bytesLength l
+
+    copy []     _   = return ()
+    copy (x:xs) dst = do
+        withPtr x $ \src -> memCopy dst src chunkLen
+        copy xs (dst `plusPtr` chunkLen)
+      where
+        chunkLen = bytesLength x
+
+bytesAppend :: Bytes -> Bytes -> IO Bytes
+bytesAppend b1 b2 = bytesAlloc retLen $ \dst -> do
+    withPtr b1 $ \s1 -> memCopy dst                  s1 len1
+    withPtr b2 $ \s2 -> memCopy (dst `plusPtr` len1) s2 len2
+  where
+    len1   = bytesLength b1
+    len2   = bytesLength b2
+    retLen = len1 + len2
 
 bytesAllocRet :: Int -> (Ptr p -> IO a) -> IO (a, Bytes)
 bytesAllocRet sz f = do
@@ -113,13 +122,27 @@ bytesEq b1@(Bytes m1) b2@(Bytes m2)
                             then loop (i +# 1#) s''
                             else (# s', False #)
 
-{-
-bytesIndex :: Bytes -> Int -> Word8
-bytesIndex (Bytes m) (I# i) = unsafeDoIO $ IO $ \s ->
-    case readWord8Array# m i s of
-        (# s', e #) -> (# s', W8# e #)
-{-# NOINLINE bytesIndex #-}
--}
+bytesCompare :: Bytes -> Bytes -> Ordering
+bytesCompare b1@(Bytes m1) b2@(Bytes m2) = unsafeDoIO $ IO $ \s -> loop 0# s
+  where
+    !l1       = bytesLength b1
+    !l2       = bytesLength b2
+    !(I# len) = min l1 l2
+
+    loop i s1
+        | booleanPrim (i ==# len) =
+            if l1 == l2
+                then (# s1, EQ #)
+                else if l1 > l2 then (# s1, GT #)
+                                else (# s1, LT #)
+        | otherwise               =
+            case readWord8Array# m1 i s1 of
+                (# s2, e1 #) -> case readWord8Array# m2 i s2 of
+                    (# s3, e2 #) ->
+                        if booleanPrim (eqWord# e1 e2)
+                            then loop (i +# 1#) s3
+                            else if booleanPrim (ltWord# e1 e2) then (# s3, LT #)
+                                                                else (# s3, GT #)
 
 bytesShowHex :: Bytes -> String
 bytesShowHex b = showHexadecimal (withPtr b) (bytesLength b)
