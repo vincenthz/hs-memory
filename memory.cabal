@@ -28,6 +28,7 @@ Flag support_bytestring
 Library
   Exposed-modules:   Data.ByteArray
                      Data.ByteArray.Encoding
+                     Data.ByteArray.Parse
                      Data.Memory.Endian
                      Data.Memory.PtrMethods
                      Data.Memory.ExtendedWords
