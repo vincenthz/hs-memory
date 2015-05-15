@@ -4,8 +4,9 @@ module Main where
 
 import           Imports
 import           Data.Word
-import           Data.ByteArray      (Bytes, ScrubbedBytes, ByteArray)
-import qualified Data.ByteArray as B
+import           Data.ByteArray               (Bytes, ScrubbedBytes, ByteArray)
+import qualified Data.ByteArray          as B
+import qualified Data.ByteArray.Encoding as B
 
 -- | similar to proxy
 data Witness a = Witness
@@ -44,7 +45,7 @@ instance Arbitrary a => Arbitrary (SmallList a) where
     arbitrary = choose (0,8) >>= \n -> SmallList `fmap` replicateM n arbitrary
 
 instance Arbitrary ArbitraryBS where
-    arbitrary = arbitraryBS 127
+    arbitrary = arbitraryBSof 0 259
 
 newtype Words8 = Words8 { unWords8 :: [Word8] }
     deriving (Show,Eq)
@@ -52,15 +53,38 @@ newtype Words8 = Words8 { unWords8 :: [Word8] }
 instance Arbitrary Words8 where
     arbitrary = choose (0, 259) >>= \n -> Words8 <$> replicateM n arbitrary
 
-testGroupBackends :: String -> (forall ba . (Eq ba, ByteArray ba) => (ba -> ba) -> [TestTree]) -> TestTree
+testGroupBackends :: String -> (forall ba . (Show ba, Eq ba, ByteArray ba) => (ba -> ba) -> [TestTree]) -> TestTree
 testGroupBackends x l =
     testGroup x
         [ testGroup "Bytes" (l withBytesWitness)
         , testGroup "ScrubbedBytes" (l withScrubbedBytesWitness)
         ]
 
+base64Kats =
+    [ ("pleasure.", "cGxlYXN1cmUu")
+    , ("leasure.", "bGVhc3VyZS4=")
+    , ("easure.", "ZWFzdXJlLg==")
+    , ("asure.", "YXN1cmUu")
+    , ("sure.", "c3VyZS4=")
+    ]
+
+encodingTests witnessID =
+    [ testGroup "KAT" kats
+    ]
+  where kats = map toTest $ zip [1..] base64Kats
+
+        unS :: String -> [Word8]
+        unS = map (fromIntegral . fromEnum)
+        
+        toTest :: (Int, (String, String)) -> TestTree
+        toTest (i, (inp, out)) = testCase (show i) $
+            let inpbs = witnessID $ B.convertToBase B.Base64 $ witnessID $ B.pack $ unS inp
+                outbs = witnessID $ B.pack $ unS out
+             in outbs @=? inpbs
+
 main = defaultMain $ testGroup "memory"
     [ localOption (QuickCheckTests 500) $ testGroupBackends "basic" basicProperties
+    , testGroupBackends "encoding" encodingTests
     ]
   where
     basicProperties witnessID =
@@ -82,3 +106,5 @@ main = defaultMain $ testGroup "memory"
                 expected = concatMap unWords8 l
              in B.pack expected == B.concat chunks
         ]
+
+
