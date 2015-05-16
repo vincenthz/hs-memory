@@ -12,6 +12,8 @@
 module Data.Memory.Internal.Compat
     ( unsafeDoIO
     , popCount
+    , unsafeShiftL
+    , unsafeShiftR
     , byteSwap64
     , byteSwap32
     , byteSwap16
@@ -62,4 +64,12 @@ byteSwap32 w =
 byteSwap16 :: Word16 -> Word16
 byteSwap16 w =
     (w `shiftR` 8) .|. (w `shiftL` 8)
+#endif
+
+#if !(MIN_VERSION_base(4,3,0))
+unsafeShiftL :: Bits a => a -> Int -> a
+unsafeShiftL = shiftL
+
+unsafeShiftR :: Bits a => a -> Int -> a
+unsafeShiftR = shiftR
 #endif

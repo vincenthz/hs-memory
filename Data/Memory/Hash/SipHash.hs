@@ -16,12 +16,13 @@ module Data.Memory.Hash.SipHash
     , hashWith
     ) where
 
+import           Data.Memory.Endian
+import           Data.Memory.Internal.Compat
 import           Data.Word
 import           Data.Bits
 import           Control.Monad
 import           Foreign.Ptr
 import           Foreign.Storable
-import           Data.Memory.Endian
 
 -- | SigHash Key
 data SipKey = SipKey {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
