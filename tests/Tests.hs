@@ -10,6 +10,8 @@ import qualified Data.ByteArray          as B
 import qualified Data.ByteArray.Encoding as B
 import qualified Data.ByteArray.Parse    as Parse
 
+import qualified SipHash
+
 data Backend = BackendByte | BackendScrubbedBytes
     deriving (Show,Eq,Bounded,Enum)
 
@@ -84,6 +86,9 @@ main = defaultMain $ testGroup "memory"
     [ localOption (QuickCheckTests 500) $ testGroupBackends "basic" basicProperties
     , testGroupBackends "encoding" encodingTests
     , testGroupBackends "parsing" parsingTests
+    , testGroupBackends "hashing" $ \witnessID ->
+        [ testGroup "SipHash" $ SipHash.tests witnessID
+        ]
     ]
   where
     basicProperties witnessID =

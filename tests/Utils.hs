@@ -21,3 +21,5 @@ withBytesWitness = withWitness (Witness :: Witness Bytes)
 withScrubbedBytesWitness :: ScrubbedBytes -> ScrubbedBytes
 withScrubbedBytesWitness = id
 
+numberedList :: [a] -> [(Int, a)]
+numberedList = zip [1..]
