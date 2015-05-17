@@ -44,6 +44,7 @@ Library
                      Data.Memory.Internal.CompatPrim
                      Data.Memory.Internal.Imports
                      Data.Memory.Hash.SipHash
+                     Data.Memory.Hash.FNV
                      Data.ByteArray.Types
                      Data.ByteArray.Bytes
                      Data.ByteArray.ScrubbedBytes
