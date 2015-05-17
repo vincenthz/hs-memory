@@ -73,3 +73,4 @@ unsafeShiftL = shiftL
 unsafeShiftR :: Bits a => a -> Int -> a
 unsafeShiftR = shiftR
 #endif
+

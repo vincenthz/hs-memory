@@ -19,6 +19,7 @@ import           GHC.Prim
 import           GHC.Ptr
 import           Data.Monoid
 import           Data.Memory.PtrMethods
+import           Data.Memory.Internal.Imports
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat      (unsafeDoIO)
 import           Data.Memory.Encoding.Base16      (showHexadecimal)
@@ -37,7 +38,8 @@ instance Monoid Bytes where
     mempty        = unsafeDoIO (newBytes 0)
     mappend b1 b2 = unsafeDoIO $ bytesAppend b1 b2
     mconcat       = unsafeDoIO . bytesConcat
-
+instance NFData Bytes where
+    rnf b = b `seq` ()
 instance ByteArrayAccess Bytes where
     length        = bytesLength
     withByteArray = withBytes

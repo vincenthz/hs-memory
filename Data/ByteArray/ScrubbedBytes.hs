@@ -17,10 +17,10 @@ import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
 import           Data.Monoid
-import           Data.Memory.PtrMethods          (memCopy)
+import           Data.Memory.PtrMethods          (memCopy, memConstEqual)
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
-import           Data.Memory.PtrMethods          (memConstEqual)
+import           Data.Memory.Internal.Imports
 import           Data.ByteArray.Types
 
 -- | ScrubbedBytes is a memory chunk which have the properties of:
@@ -44,6 +44,8 @@ instance Monoid ScrubbedBytes where
     mempty        = unsafeDoIO (newScrubbedBytes 0)
     mappend b1 b2 = unsafeDoIO $ scrubbedBytesAppend b1 b2
     mconcat       = unsafeDoIO . scrubbedBytesConcat
+instance NFData ScrubbedBytes where
+    rnf b = b `seq` ()
 
 instance ByteArrayAccess ScrubbedBytes where
     length        = sizeofScrubbedBytes
