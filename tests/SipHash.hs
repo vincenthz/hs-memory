@@ -9,10 +9,6 @@ import           Data.ByteArray               (Bytes, ScrubbedBytes, ByteArray)
 import qualified Data.ByteArray          as B
 import           Data.ByteArray.Hash (SipKey(..), SipHash(..), sipHash)
 
-assertEq expected got
-	| expected == got = True
-	| otherwise       = error ("expected: " ++ show expected ++ " got: " ++ show got)
-
 katKey = SipKey 0x0706050403020100 0x0f0e0d0c0b0a0908
 
 vectors =
