@@ -17,5 +17,12 @@ module Data.Memory.Internal.DeepSeq
 #ifdef WITH_DEEPSEQ_SUPPORT
 import Control.DeepSeq
 #else
+import Data.Word
+
 class NFData a where rnf :: a -> ()
+
+instance NFData Word8 where rnf w = w `seq` ()
+instance NFData Word16 where rnf w = w `seq` ()
+instance NFData Word32 where rnf w = w `seq` ()
+instance NFData Word64 where rnf w = w `seq` ()
 #endif
