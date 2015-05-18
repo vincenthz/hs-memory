@@ -23,7 +23,6 @@ module Data.ByteArray.Methods
     , drop
     , span
     , convert
-    , convertHex
     , copyRet
     , copyAndFreeze
     , splitAt
@@ -33,35 +32,33 @@ module Data.ByteArray.Methods
     , constEq
     , append
     , concat
-    , toW64BE
-    , toW64LE
-    , mapAsWord64
-    , mapAsWord128
     ) where
 
+import           Data.ByteArray.Types
 import           Data.Memory.Internal.Compat
 import           Data.Memory.Internal.Imports hiding (empty)
-import           Data.ByteArray.Types
-import           Data.Memory.Endian
 import           Data.Memory.PtrMethods
-import           Data.Memory.ExtendedWords
-import           Data.Memory.Encoding.Base16
+import           Data.Monoid
 import           Foreign.Storable
 import           Foreign.Ptr
 
 import           Prelude hiding (length, take, drop, span, concat, replicate, splitAt, null, pred)
 import qualified Prelude
 
+-- | Allocate a new bytearray of specific size, and run the initializer on this memory
 alloc :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
 alloc n f = snd `fmap` allocRet n f
 
+-- | Allocate a new bytearray of specific size, and run the initializer on this memory
 create :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
 create n f = alloc n f
 
+-- | similar to 'alloc' but hide the allocation and initializer in a pure context
 allocAndFreeze :: ByteArray a => Int -> (Ptr p -> IO ()) -> a
 allocAndFreeze sz f = unsafeDoIO (alloc sz f)
 {-# NOINLINE allocAndFreeze #-}
 
+-- | similar to 'create' but hide the allocation and initializer in a pure context
 unsafeCreate :: ByteArray a => Int -> (Ptr p -> IO ()) -> a
 unsafeCreate sz f = unsafeDoIO (alloc sz f)
 {-# NOINLINE unsafeCreate #-}
@@ -90,6 +87,7 @@ unpack bs = loop 0
                 let !v = unsafeDoIO $ withByteArray bs (\p -> peekByteOff p i)
                  in v : loop (i+1)
 
+-- | returns the first bytes, and the remaining bytearray if the bytearray is not null
 uncons :: ByteArray a => a -> Maybe (Word8, a)
 uncons a
     | null a    = Nothing
@@ -109,9 +107,13 @@ xor a b =
         la = length a
         lb = length b
 
+-- | return a specific byte indexed by a number from 0 in a bytearray
+--
+-- unsafe, no bound checking are done
 index :: ByteArrayAccess a => a -> Int -> Word8
 index b i = unsafeDoIO $ withByteArray b $ \p -> peek (p `plusPtr` i)
 
+-- | Split a bytearray at a specific length in two bytearray
 splitAt :: ByteArray bs => Int -> bs -> (bs, bs)
 splitAt n bs
     | n <= 0    = (empty, bs)
@@ -123,6 +125,7 @@ splitAt n bs
             return (b1, b2)
   where len = length bs
 
+-- | Take the first @n byte of a bytearray
 take :: ByteArray bs => Int -> bs -> bs
 take n bs
     | n <= 0    = empty
@@ -131,6 +134,7 @@ take n bs
     m   = min len n
     len = length bs
 
+-- | drop the first @n byte of a bytearray
 drop :: ByteArray bs => Int -> bs -> bs
 drop n bs
     | n  < 0    = bs
@@ -141,6 +145,7 @@ drop n bs
     nb  = len - ofs
     len = length bs
 
+-- | Split a bytearray at the point where @pred becomes invalid
 span :: ByteArray bs => (Word8 -> Bool) -> bs -> (bs, bs)
 span pred bs
     | null bs   = (bs, bs)
@@ -149,49 +154,51 @@ span pred bs
             | pred (index bs i) = loop (i+1)
             | otherwise         = i
 
+-- | Concatenate bytearray into a larger bytearray
 concat :: ByteArray bs => [bs] -> bs
-concat []    = empty
-concat allBs = unsafeCreate total (loop allBs)
-  where
-        total = sum $ map length allBs
+concat = mconcat
 
-        loop []     _   = return ()
-        loop (b:bs) dst = do
-            let sz = length b
-            withByteArray b $ \p -> memCopy dst p sz
-            loop bs (dst `plusPtr` sz)
-
+-- | append one bytearray to the other
 append :: ByteArray bs => bs -> bs -> bs
-append b1 b2 = concat [b1,b2]
+append = mappend
 
+-- | Duplicate a bytearray into another bytearray, and run an initializer on it
 copy :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> IO bs2
 copy bs f =
     alloc (length bs) $ \d -> do
         withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
+-- | Similar to 'copy' but also provide a way to return a value from the initializer
 copyRet :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO a) -> IO (a, bs2)
 copyRet bs f =
     allocRet (length bs) $ \d -> do
         withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
+-- | Similiar to 'copy' but expect the resulting bytearray in a pure context
 copyAndFreeze :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> bs2
 copyAndFreeze bs f =
     unsafeCreate (length bs) $ \d -> do
         withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
+-- | Create a bytearray of a specific size containing a repeated byte value
 replicate :: ByteArray ba => Int -> Word8 -> ba
 replicate 0 _ = empty
 replicate n b = unsafeCreate n $ \ptr -> memSet ptr b n
 {-# NOINLINE replicate #-}
 
+-- | Create a bytearray of a specific size initialized to 0
 zero :: ByteArray ba => Int -> ba
 zero 0 = empty
 zero n = unsafeCreate n $ \ptr -> memSet ptr 0 n
 {-# NOINLINE zero #-}
 
+-- | Check if two bytearray are equals
+--
+-- This is not constant time, as soon some byte differs the function will
+-- returns. use 'constEq' in sensitive context where timing matters.
 eq :: (ByteArrayAccess bs1, ByteArrayAccess bs2) => bs1 -> bs2 -> Bool
 eq b1 b2
     | l1 /= l2  = False
@@ -216,50 +223,6 @@ constEq b1 b2
     l1 = length b1
     l2 = length b2
 
-toW64BE :: ByteArrayAccess bs => bs -> Int -> BE Word64
-toW64BE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
-
-toW64LE :: ByteArrayAccess bs => bs -> Int -> LE Word64
-toW64LE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
-
-mapAsWord128 :: ByteArray bs => (Word128 -> Word128) -> bs -> bs
-mapAsWord128 f bs =
-    unsafeCreate len $ \dst ->
-    withByteArray bs $ \src ->
-        loop (len `div` 16) dst src
-  where
-        len        = length bs
-        loop :: Int -> Ptr (BE Word64) -> Ptr (BE Word64) -> IO ()
-        loop 0 _ _ = return ()
-        loop i d s = do
-            w1 <- peek s
-            w2 <- peek (s `plusPtr` 8)
-            let (Word128 r1 r2) = f (Word128 (fromBE w1) (fromBE w2))
-            poke d               (toBE r1)
-            poke (d `plusPtr` 8) (toBE r2)
-            loop (i-1) (d `plusPtr` 16) (s `plusPtr` 16)
-
-mapAsWord64 :: ByteArray bs => (Word64 -> Word64) -> bs -> bs
-mapAsWord64 f bs =
-    unsafeCreate len $ \dst ->
-    withByteArray bs $ \src ->
-        loop (len `div` 8) dst src
-  where
-        len        = length bs
-
-        loop :: Int -> Ptr (BE Word64) -> Ptr (BE Word64) -> IO ()
-        loop 0 _ _ = return ()
-        loop i d s = do
-            w <- peek s
-            let r = f (fromBE w)
-            poke d (toBE r)
-            loop (i-1) (d `plusPtr` 8) (s `plusPtr` 8)
-
+-- | Convert a bytearray to another type of bytearray
 convert :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout
 convert = flip copyAndFreeze (\_ -> return ())
-
-convertHex :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout
-convertHex b =
-    unsafeCreate (length b * 2) $ \bout ->
-    withByteArray b             $ \bin  ->
-        toHexadecimal bout bin (length b)

@@ -33,6 +33,7 @@ Flag support_deepseq
 Library
   Exposed-modules:   Data.ByteArray
                      Data.ByteArray.Encoding
+                     Data.ByteArray.Mapping
                      Data.ByteArray.Parse
                      Data.ByteArray.Hash
                      Data.Memory.Endian

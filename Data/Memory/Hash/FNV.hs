@@ -32,12 +32,15 @@ import           GHC.Prim
 import           GHC.Types
 import           GHC.Ptr
 
+-- | FNV1(a) hash (32 bit variants)
 newtype FnvHash32 = FnvHash32 Word32
     deriving (Show,Eq,NFData)
 
+-- | FNV1(a) hash (64 bit variants)
 newtype FnvHash64 = FnvHash64 Word64
     deriving (Show,Eq,NFData)
 
+-- | compute FNV1 (32 bit variant) of a raw piece of memory
 fnv1 :: Ptr Word8 -> Int -> IO FnvHash32
 fnv1 (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
   where 
@@ -50,6 +53,7 @@ fnv1 (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
                         let !nacc = (0x01000193## `timesWord#` acc) `xor#` v
                          in loop nacc (i +# 1#) s2
 
+-- | compute FNV1a (32 bit variant) of a raw piece of memory
 fnv1a :: Ptr Word8 -> Int -> IO FnvHash32
 fnv1a (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
   where 
@@ -62,6 +66,7 @@ fnv1a (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
                         let !nacc = 0x01000193## `timesWord#` (acc `xor#` v)
                          in loop nacc (i +# 1#) s2
 
+-- | compute FNV1 (64 bit variant) of a raw piece of memory
 fnv1_64 :: Ptr Word8 -> Int -> IO FnvHash64
 fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
   where 
@@ -74,6 +79,7 @@ fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
                         let !nacc = (0x100000001b3## `timesWord#` acc) `xor#` v
                          in loop nacc (i +# 1#) s2
 
+-- | compute FNV1a (64 bit variant) of a raw piece of memory
 fnv1a_64 :: Ptr Word8 -> Int -> IO FnvHash64
 fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
   where 

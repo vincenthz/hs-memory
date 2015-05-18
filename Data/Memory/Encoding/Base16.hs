@@ -28,8 +28,11 @@ import           Control.Monad
 import           Foreign.Storable
 import           Foreign.Ptr (Ptr)
 
-showHexadecimal :: (forall a . (Ptr Word8 -> IO a) -> IO a)
-                -> Int
+-- | Transform a raw memory to an hexadecimal 'String'
+-- 
+-- user beware, no checks are made
+showHexadecimal :: (forall a . (Ptr Word8 -> IO a) -> IO a) -- ^ a 'with' type of function to hold reference to the object
+                -> Int    -- ^ length in bytes
                 -> String
 showHexadecimal withPtr = doChunks 0
   where
@@ -63,7 +66,14 @@ showHexadecimal withPtr = doChunks 0
         byteIndex :: Int -> Ptr Word8 -> IO Word8
         byteIndex i p = peekByteOff p i
 
-toHexadecimal :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
+-- | Transform a number of bytes pointed by.@src in the hexadecimal binary representation in @dst
+--
+-- destination memory need to be of correct size, otherwise it will lead
+-- to really bad things.
+toHexadecimal :: Ptr Word8 -- ^ destination memory
+              -> Ptr Word8 -- ^ source memory
+              -> Int       -- ^ number of bytes
+              -> IO ()
 toHexadecimal bout bin n = loop 0
   where loop i
             | i == n  = return ()
@@ -74,6 +84,8 @@ toHexadecimal bout bin n = loop 0
                 pokeByteOff bout (i * 2 + 1) (W8# w2)
                 loop (i+1)
 
+-- | Convert a value Word# to two Word#s containing
+-- the hexadecimal representation of the Word#
 convertByte :: Word# -> (# Word#, Word# #)
 convertByte b = (# r tableHi b, r tableLo b #)
   where

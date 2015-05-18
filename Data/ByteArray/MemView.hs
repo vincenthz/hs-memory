@@ -13,6 +13,15 @@ import           Foreign.Ptr
 import           Data.ByteArray.Types
 import           Data.Memory.Internal.Imports
 
+-- | A simple abstraction to a piece of memory.
+--
+-- Do beware that garbage collection related to
+-- piece of memory could be triggered before this
+-- is used.
+--
+-- Only use with the appropriate handler has been
+-- used (e.g. withForeignPtr on ForeignPtr)
+--
 data MemView = MemView !(Ptr Word8) !Int
 
 instance ByteArrayAccess MemView where

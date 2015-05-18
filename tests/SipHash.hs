@@ -4,8 +4,6 @@ module SipHash (tests) where
 
 import           Imports
 import           Utils
-import           Data.Word
-import           Data.ByteArray               (Bytes, ScrubbedBytes, ByteArray)
 import qualified Data.ByteArray          as B
 import           Data.ByteArray.Hash (SipKey(..), SipHash(..), sipHash)
 

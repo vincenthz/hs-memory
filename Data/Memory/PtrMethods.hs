@@ -64,6 +64,7 @@ memCopy dst src n = c_memcpy dst src (fromIntegral n)
 memSet :: Ptr Word8 -> Word8 -> Int -> IO ()
 memSet start v n = c_memset start (fromIntegral v) (fromIntegral n) >>= \_ -> return ()
 
+-- | Check if two piece of memory are equals
 memEqual :: Ptr Word8 -> Ptr Word8 -> Int -> IO Bool
 memEqual p1 p2 n = loop 0
   where
@@ -73,6 +74,7 @@ memEqual p1 p2 n = loop 0
             e <- (==) <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
             if e then loop (i+1) else return False
 
+-- | Compare two piece of memory and returns how they compare
 memCompare :: Ptr Word8 -> Ptr Word8 -> Int -> IO Ordering
 memCompare p1 p2 n = loop 0
   where

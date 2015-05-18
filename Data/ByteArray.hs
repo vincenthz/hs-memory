@@ -14,7 +14,9 @@
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.ByteArray
-    ( module X
+    (
+    -- * ByteArray
+    module X
     ) where
 
 import           Data.ByteArray.Types         as X

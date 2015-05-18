@@ -13,6 +13,7 @@ module Data.Memory.Endian
     , BE(..), LE(..)
     , fromBE, toBE
     , fromLE, toLE
+    , ByteSwap
     ) where
 
 import Data.Word (Word16, Word32, Word64)
@@ -104,6 +105,9 @@ fromLE (LE a) = if getSystemEndianness == LittleEndian then a else byteSwap a
 #endif
 {-# INLINE fromLE #-}
 
+-- | Class of types that can be byte-swapped.
+--
+-- e.g. Word16, Word32, Word64
 class Storable a => ByteSwap a where
     byteSwap :: a -> a
 instance ByteSwap Word16 where

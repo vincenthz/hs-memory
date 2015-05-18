@@ -28,6 +28,10 @@ import           GHC.Word
 import           Foreign.Storable
 import           Foreign.Ptr (Ptr)
 
+-- | Transform a number of bytes pointed by.@src in the base64 binary representation in @dst
+--
+-- destination memory need to be of correct size, otherwise it will lead
+-- to really bad things.
 toBase64 :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
 toBase64 dst src len = loop 0 0
   where
