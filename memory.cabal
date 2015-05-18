@@ -34,6 +34,7 @@ Library
   Exposed-modules:   Data.ByteArray
                      Data.ByteArray.Encoding
                      Data.ByteArray.Mapping
+                     Data.ByteArray.Pack
                      Data.ByteArray.Parse
                      Data.ByteArray.Hash
                      Data.Memory.Endian
@@ -47,6 +48,7 @@ Library
                      Data.Memory.Internal.Imports
                      Data.Memory.Hash.SipHash
                      Data.Memory.Hash.FNV
+                     Data.ByteArray.Pack.Internal
                      Data.ByteArray.Types
                      Data.ByteArray.Bytes
                      Data.ByteArray.ScrubbedBytes
