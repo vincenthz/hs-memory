@@ -37,8 +37,16 @@ convertToBase Base64 b =
         outLen = 4 * (if r == 0 then q else q+1)
 
 convertFromBase :: (ByteArrayAccess bin, ByteArray bout) => Base -> bin -> Either String bout
-convertFromBase Base16 b =
-    Left "not implemented"
+convertFromBase Base16 b
+    | odd (B.length b) = Left "base16: input: invalid length"
+    | otherwise        = unsafeDoIO $ do
+        (ret, out) <-
+            B.allocRet (B.length b `div` 2) $ \bout ->
+            B.withByteArray b               $ \bin  ->
+                fromHexadecimal bout bin (B.length b)
+        case ret of
+            Nothing  -> return $ Right out
+            Just ofs -> return $ Left ("base16: input: invalid encoding at offset: " ++ show ofs)
 convertFromBase Base64 b = unsafeDoIO $
     withByteArray b $ \bin -> do
         mDstLen <- unBase64Length bin (B.length b)

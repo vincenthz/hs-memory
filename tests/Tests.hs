@@ -60,24 +60,34 @@ base64Kats =
     , ("sure.", "c3VyZS4=")
     ]
 
+base16Kats =
+    [ ("this is a string", "74686973206973206120737472696e67") ]
+
 encodingTests witnessID =
     [ testGroup "BASE64"
-        [ testGroup "encode-KAT" encodeKats
-        , testGroup "decode-KAT" decodeKats
+        [ testGroup "encode-KAT" encodeKats64
+        , testGroup "decode-KAT" decodeKats64
+        ]
+    , testGroup "BASE16"
+        [ testGroup "encode-KAT" encodeKats16
+        , testGroup "decode-KAT" decodeKats16
         ]
     ]
-  where encodeKats = map toTest $ zip [1..] base64Kats
-        decodeKats = map toBackTest $ zip [1..] base64Kats
+  where
+        encodeKats64 = map (toTest B.Base64) $ zip [1..] base64Kats
+        decodeKats64 = map (toBackTest B.Base64) $ zip [1..] base64Kats
+        encodeKats16 = map (toTest B.Base16) $ zip [1..] base16Kats
+        decodeKats16 = map (toBackTest B.Base16) $ zip [1..] base16Kats
 
-        toTest :: (Int, (String, String)) -> TestTree
-        toTest (i, (inp, out)) = testCase (show i) $
-            let inpbs = witnessID $ B.convertToBase B.Base64 $ witnessID $ B.pack $ unS inp
+        toTest :: B.Base -> (Int, (String, String)) -> TestTree
+        toTest base (i, (inp, out)) = testCase (show i) $
+            let inpbs = witnessID $ B.convertToBase base $ witnessID $ B.pack $ unS inp
                 outbs = witnessID $ B.pack $ unS out
              in outbs @=? inpbs
-        toBackTest :: (Int, (String, String)) -> TestTree
-        toBackTest (i, (inp, out)) = testCase (show i) $
+        toBackTest :: B.Base -> (Int, (String, String)) -> TestTree
+        toBackTest base (i, (inp, out)) = testCase (show i) $
             let inpbs = witnessID $ B.pack $ unS inp
-                outbs = B.convertFromBase B.Base64 $ witnessID $ B.pack $ unS out
+                outbs = B.convertFromBase base $ witnessID $ B.pack $ unS out
              in Right inpbs @=? outbs
 
 parsingTests witnessID =
