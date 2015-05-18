@@ -1,18 +1,21 @@
 -- |
 -- Module      : Data.ByteArray.Pack
 -- License     : BSD-Style
--- Copyright   : Copyright © 2014 Nicolas DI PRIMA
 -- Maintainer  : Vincent Hanquez <vincent@snarc.org>
 -- Stability   : experimental
 -- Portability : unknown
 --
 -- Simple Byte Array packer
 --
--- > > either error id $ flip pack 20 $ putWord8 0x41 >> putByteString "BCD" >> putWord8 0x20 >> putStorable (42 :: Word32)
--- > ABCD *\NUL\NUL\NUL"
+-- Simple example:
 --
---  Original code from <https://hackage.haskell.org/package/bspack>
---  generalized and adapted to run on 'memory', and spellchecked / tweaked. (2015-05)
+-- > > flip pack 20 $ putWord8 0x41 >> putByteString "BCD" >> putWord8 0x20 >> putStorable (42 :: Word32)
+-- > Right (ABCD *\NUL\NUL\NUL")
+--
+-- Original code from <https://hackage.haskell.org/package/bspack>
+-- generalized and adapted to run on 'memory', and spellchecked / tweaked. (2015-05)
+-- Copyright (c) 2014 Nicolas DI PRIMA
+--
 module Data.ByteArray.Pack
     ( Packer
     , Result(..)

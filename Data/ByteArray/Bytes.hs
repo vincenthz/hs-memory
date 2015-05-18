@@ -22,7 +22,6 @@ import           Data.Memory.PtrMethods
 import           Data.Memory.Internal.Imports
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat      (unsafeDoIO)
-import           Data.Memory.Encoding.Base16      (showHexadecimal)
 import           Data.ByteArray.Types
 
 -- | Simplest Byte Array
@@ -174,6 +173,8 @@ bytesUnpackChars (Bytes mba) xs = chunkLoop 0#
         case readWord8Array# mba idx s of
             (# s2, w #) -> (# s2, C# (chr# (word2Int# w)) #)
 
+{-
 bytesShowHex :: Bytes -> String
 bytesShowHex b = showHexadecimal (withPtr b) (bytesLength b)
 {-# NOINLINE bytesShowHex #-}
+-}
