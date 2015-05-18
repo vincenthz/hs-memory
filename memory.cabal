@@ -59,6 +59,10 @@ Library
   -- ARCH_ENDIAN_UNKNOWN
   if (arch(i386) || arch(x86_64))
     CPP-options:     -DARCH_IS_LITTLE_ENDIAN
+  if os(windows)
+    Other-modules:   Data.Memory.MemMap.Windows
+  else
+    Other-modules:   Data.Memory.MemMap.Posix
 
   -- optional support bytearray instance for bytestring
   if flag(support_bytestring)
