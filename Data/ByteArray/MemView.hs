@@ -22,7 +22,7 @@ import           Data.Memory.Internal.Imports
 -- Only use with the appropriate handler has been
 -- used (e.g. withForeignPtr on ForeignPtr)
 --
-data MemView = MemView !(Ptr Word8) !Int
+data MemView = MemView {-# UNPACK #-} !(Ptr Word8) {-# UNPACK #-} !Int
 
 instance ByteArrayAccess MemView where
     length (MemView _ l) = l
