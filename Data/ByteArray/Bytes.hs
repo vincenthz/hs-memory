@@ -29,7 +29,7 @@ import           Data.ByteArray.Types
 data Bytes = Bytes (MutableByteArray# RealWorld)
 
 instance Show Bytes where
-    show = bytesShowHex
+    showsPrec p b r = showsPrec p (bytesUnpackChars b []) r
 instance Eq Bytes where
     (==) = bytesEq
 instance Ord Bytes where
@@ -145,6 +145,34 @@ bytesCompare b1@(Bytes m1) b2@(Bytes m2) = unsafeDoIO $ IO $ \s -> loop 0# s
                             then loop (i +# 1#) s3
                             else if booleanPrim (ltWord# e1 e2) then (# s3, LT #)
                                                                 else (# s3, GT #)
+
+bytesUnpackChars :: Bytes -> String -> String
+bytesUnpackChars (Bytes mba) xs = chunkLoop 0#
+  where
+    !len = sizeofMutableByteArray# mba
+    -- chunk 64 bytes at a time
+    chunkLoop :: Int# -> [Char]
+    chunkLoop idx
+        | booleanPrim (len ==# idx) = []
+        | booleanPrim ((len -# idx) ># 63#) =
+            bytesLoop idx (idx +# 64#) (chunkLoop (idx +# 64#))
+        | otherwise =
+            bytesLoop idx (len -# idx) xs
+
+    bytesLoop idx chunkLenM1 paramAcc = unsafeDoIO $
+        loop (idx +# chunkLenM1 -# 1#) paramAcc
+      where loop i acc
+                | booleanPrim (i ==# idx) = do
+                    c <- rChar idx
+                    return (c : acc)
+                | otherwise = do
+                    c <- rChar idx
+                    loop (i -# 1#) (c : acc)
+
+    rChar :: Int# -> IO Char
+    rChar idx = IO $ \s ->
+        case readWord8Array# mba idx s of
+            (# s2, w #) -> (# s2, C# (chr# (word2Int# w)) #)
 
 bytesShowHex :: Bytes -> String
 bytesShowHex b = showHexadecimal (withPtr b) (bytesLength b)
