@@ -87,7 +87,7 @@ unpack bs = loop 0
                 let !v = unsafeDoIO $ withByteArray bs (\p -> peekByteOff p i)
                  in v : loop (i+1)
 
--- | returns the first bytes, and the remaining bytearray if the bytearray is not null
+-- | returns the first byte, and the remaining bytearray if the bytearray is not null
 uncons :: ByteArray a => a -> Maybe (Word8, a)
 uncons a
     | null a    = Nothing
