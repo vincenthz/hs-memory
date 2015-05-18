@@ -30,5 +30,9 @@ instance ByteArrayAccess MemView where
     length (MemView _ l) = l
     withByteArray (MemView p _) f = f (castPtr p)
 
+-- | Increase the memory view while reducing the size of the window
+--
+-- this is useful as an abtraction to represent the current offset
+-- in a buffer, and the remaining bytes left.
 memViewPlus :: MemView -> Int -> MemView
 memViewPlus (MemView p len) n = MemView (p `plusPtr` n) (len - n)

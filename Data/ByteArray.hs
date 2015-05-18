@@ -15,12 +15,18 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 module Data.ByteArray
     (
-    -- * ByteArray
-    module X
+    -- * ByteArray Classes
+      module Data.ByteArray.Types
+    -- * ByteArray built-in types
+    , module Data.ByteArray.Bytes
+    , module Data.ByteArray.ScrubbedBytes
+    , module Data.ByteArray.MemView
+    -- * ByteArray methods
+    , module Data.ByteArray.Methods
     ) where
 
-import           Data.ByteArray.Types         as X
-import           Data.ByteArray.Methods       as X
-import           Data.ByteArray.ScrubbedBytes as X (ScrubbedBytes)
-import           Data.ByteArray.Bytes         as X (Bytes)
-import           Data.ByteArray.MemView       as X (MemView(..))
+import           Data.ByteArray.Types
+import           Data.ByteArray.Methods
+import           Data.ByteArray.ScrubbedBytes (ScrubbedBytes)
+import           Data.ByteArray.Bytes         (Bytes)
+import           Data.ByteArray.MemView       (MemView(..))

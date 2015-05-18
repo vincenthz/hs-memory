@@ -147,6 +147,9 @@ memoryMap initPtr sz prots flag mfd off =
         toMapFlag MemoryMapShared  = (#const MAP_SHARED)
         toMapFlag MemoryMapPrivate = (#const MAP_PRIVATE)
 
+-- | Unmap pages of memory
+--
+-- use 'munmap'
 memoryUnmap :: Ptr a -> CSize -> IO ()
 memoryUnmap ptr sz = throwErrnoIfMinus1_ "munmap" (c_munmap ptr sz)
 
