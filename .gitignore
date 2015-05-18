@@ -3,3 +3,4 @@
 *.tix
 *.mix
 dist
+refs/
