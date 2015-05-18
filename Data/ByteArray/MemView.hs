@@ -7,6 +7,7 @@
 --
 module Data.ByteArray.MemView
     ( MemView(..)
+    , memViewPlus
     ) where
 
 import           Foreign.Ptr
@@ -23,8 +24,11 @@ import           Data.Memory.Internal.Imports
 -- used (e.g. withForeignPtr on ForeignPtr)
 --
 data MemView = MemView {-# UNPACK #-} !(Ptr Word8) {-# UNPACK #-} !Int
+    deriving (Show,Eq)
 
 instance ByteArrayAccess MemView where
     length (MemView _ l) = l
     withByteArray (MemView p _) f = f (castPtr p)
 
+memViewPlus :: MemView -> Int -> MemView
+memViewPlus (MemView p len) n = MemView (p `plusPtr` n) (len - n)
