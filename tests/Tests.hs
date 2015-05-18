@@ -61,15 +61,24 @@ base64Kats =
     ]
 
 encodingTests witnessID =
-    [ testGroup "KAT" kats
+    [ testGroup "BASE64"
+        [ testGroup "encode-KAT" encodeKats
+        , testGroup "decode-KAT" decodeKats
+        ]
     ]
-  where kats = map toTest $ zip [1..] base64Kats
+  where encodeKats = map toTest $ zip [1..] base64Kats
+        decodeKats = map toBackTest $ zip [1..] base64Kats
 
         toTest :: (Int, (String, String)) -> TestTree
         toTest (i, (inp, out)) = testCase (show i) $
             let inpbs = witnessID $ B.convertToBase B.Base64 $ witnessID $ B.pack $ unS inp
                 outbs = witnessID $ B.pack $ unS out
              in outbs @=? inpbs
+        toBackTest :: (Int, (String, String)) -> TestTree
+        toBackTest (i, (inp, out)) = testCase (show i) $
+            let inpbs = witnessID $ B.pack $ unS inp
+                outbs = B.convertFromBase B.Base64 $ witnessID $ B.pack $ unS out
+             in Right inpbs @=? outbs
 
 parsingTests witnessID =
     [ testCase "parse" $
