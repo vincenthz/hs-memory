@@ -19,6 +19,7 @@
 module Data.ByteArray.Pack
     ( Packer
     , Result(..)
+    , fill
     , pack
       -- * Operations
       -- ** put
@@ -41,18 +42,23 @@ import           Data.Memory.Internal.Imports ()
 import           Data.Memory.Internal.Compat
 import           Data.Memory.PtrMethods
 import           Data.ByteArray.Pack.Internal
-import           Data.ByteArray (ByteArray, MemView(..))
+import           Data.ByteArray (ByteArray, ByteArrayAccess, MemView(..))
 import qualified Data.ByteArray as B
 
--- | pack the given packer into the given bytestring
-pack :: ByteArray byteArray => Packer a -> Int -> Either String byteArray
-pack packing len = unsafeDoIO $ do
+-- | fill a given sized buffer with the result of the Packer action
+fill :: ByteArray byteArray => Int -> Packer a -> Either String byteArray
+fill len packing = unsafeDoIO $ do
     (val, out) <- B.allocRet len $ \ptr -> runPacker_ packing (MemView ptr len)
     case val of 
         PackerMore _ (MemView _ r)
             | r == 0    -> return $ Right out
             | otherwise -> return $ Left ("remaining unpacked bytes " ++ show r ++ " at the end of buffer")
         PackerFail err  -> return $ Left err
+
+-- | pack the given packer into the given bytestring
+pack :: ByteArray byteArray => Packer a -> Int -> Either String byteArray
+pack packing len = fill len packing
+{-# DEPRECATED pack "use fill instead" #-}
 
 fillUpWithWord8' :: Word8 -> Packer ()
 fillUpWithWord8' w = Packer $ \(MemView ptr size) -> do
@@ -66,7 +72,7 @@ putStorable s = actionPacker (sizeOf s) (\ptr -> poke (castPtr ptr) s)
 -- | put a Byte Array from the current position in the stream
 --
 -- If the ByteArray is null, then do nothing
-putBytes :: ByteArray ba => ba -> Packer ()
+putBytes :: ByteArrayAccess ba => ba -> Packer ()
 putBytes bs
     | neededLength == 0 = return ()
     | otherwise         =
