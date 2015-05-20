@@ -19,7 +19,7 @@ Build-Type:          Simple
 Homepage:            https://github.com/vincenthz/hs-memory
 Bug-Reports:         https://github.com/vincenthz/hs-memory/issues
 Cabal-Version:       >=1.10
-extra-source-files:  README.md
+extra-doc-files:     README.md CHANGELOG.md
 
 source-repository head
   type: git
