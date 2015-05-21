@@ -157,8 +157,17 @@ span pred bs
             | otherwise         = i
 
 -- | Concatenate bytearray into a larger bytearray
-concat :: ByteArray bs => [bs] -> bs
-concat = mconcat
+concat :: (ByteArrayAccess bin, ByteArray bout) => [bin] -> bout
+concat l = unsafeCreate retLen (loopCopy l)
+  where
+    retLen = sum $ map length l
+
+    loopCopy []     _   = return ()
+    loopCopy (x:xs) dst = do
+        withByteArray x $ \src -> memCopy dst src chunkLen
+        loopCopy xs (dst `plusPtr` chunkLen)
+      where
+        !chunkLen = length x
 
 -- | append one bytearray to the other
 append :: ByteArray bs => bs -> bs -> bs

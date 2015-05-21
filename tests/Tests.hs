@@ -133,5 +133,5 @@ main = defaultMain $ testGroup "memory"
         , testProperty "concat l" $ \(SmallList l) ->
             let chunks   = map (witnessID . B.pack . unWords8) l
                 expected = concatMap unWords8 l
-             in B.pack expected == B.concat chunks
+             in B.pack expected == witnessID (B.concat chunks)
         ]
