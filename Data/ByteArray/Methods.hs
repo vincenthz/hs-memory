@@ -47,7 +47,9 @@ import qualified Prelude
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
 alloc :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
-alloc n f = snd `fmap` allocRet n f
+alloc n f
+    | n < 0     = alloc 0 f
+    | otherwise = snd `fmap` allocRet n f
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
 create :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
@@ -137,7 +139,7 @@ take n bs
 -- | drop the first @n byte of a bytearray
 drop :: ByteArray bs => Int -> bs -> bs
 drop n bs
-    | n  < 0    = bs
+    | n <= 0    = bs
     | nb == 0   = empty
     | otherwise = unsafeCreate nb $ \d -> withByteArray bs $ \s -> memCopy d (s `plusPtr` ofs) nb
   where
@@ -186,13 +188,17 @@ copyAndFreeze bs f =
 -- | Create a bytearray of a specific size containing a repeated byte value
 replicate :: ByteArray ba => Int -> Word8 -> ba
 replicate 0 _ = empty
-replicate n b = unsafeCreate n $ \ptr -> memSet ptr b n
+replicate n b
+    | n < 0     = empty
+    | otherwise = unsafeCreate n $ \ptr -> memSet ptr b n
 {-# NOINLINE replicate #-}
 
 -- | Create a bytearray of a specific size initialized to 0
 zero :: ByteArray ba => Int -> ba
 zero 0 = empty
-zero n = unsafeCreate n $ \ptr -> memSet ptr 0 n
+zero n
+    | n < 0     = empty
+    | otherwise = unsafeCreate n $ \ptr -> memSet ptr 0 n
 {-# NOINLINE zero #-}
 
 -- | Check if two bytearray are equals

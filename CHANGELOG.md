@@ -1,5 +1,7 @@
 ## 0.2
 
+* make all byte array operation safer related to negative size. now replicate, zero, and alloc will returns
+  an empty byte array when asking for negative size
 * replace 'pack' in Data.ByteArray.Pack by 'fill', as to not conflict with 'Data.ByteArray.pack'.
   Also swap the length and monadic action to be more naturally used
 * add a deprecated 'pack' that alias to 'fill' for now
