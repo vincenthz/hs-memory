@@ -1,3 +1,7 @@
+## 0.3
+
+* fix missing modules from tests on sdist
+
 ## 0.2
 
 * make concat more generic as to what the output is going to be, and at the same
