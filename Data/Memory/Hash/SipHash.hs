@@ -29,7 +29,7 @@ data SipKey = SipKey {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
 
 -- | Siphash tag value
 newtype SipHash = SipHash Word64
-    deriving (Show,Eq)
+    deriving (Show,Eq,Ord)
 
 data InternalState = InternalState {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word64
 

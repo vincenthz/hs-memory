@@ -34,11 +34,11 @@ import           GHC.Ptr
 
 -- | FNV1(a) hash (32 bit variants)
 newtype FnvHash32 = FnvHash32 Word32
-    deriving (Show,Eq,NFData)
+    deriving (Show,Eq,Ord,NFData)
 
 -- | FNV1(a) hash (64 bit variants)
 newtype FnvHash64 = FnvHash64 Word64
-    deriving (Show,Eq,NFData)
+    deriving (Show,Eq,Ord,NFData)
 
 -- | compute FNV1 (32 bit variant) of a raw piece of memory
 fnv1 :: Ptr Word8 -> Int -> IO FnvHash32
