@@ -1,3 +1,7 @@
+## 0.4
+
+* add Ord instances for SipHash and FnvHash (Nicolas Di Prima)
+
 ## 0.3
 
 * fix missing modules from tests on sdist
