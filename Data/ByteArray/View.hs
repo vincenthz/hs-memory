@@ -74,19 +74,34 @@ viewUnpackChars v xs = chunkLoop 0
     rChar idx = toEnum $ fromIntegral $ index v idx
 
 -- | create a view on a given bytearray
+--
+-- This function update the offset and the size in order to guarantee:
+--
+-- * offset >= 0
+-- * size >= 0
+-- * offset < length
+-- * size =< length - offset
+--
 view :: ByteArrayAccess bytes
      => bytes -- ^ the byte array we put a view on
      -> Int   -- ^ the offset to start the byte array on
      -> Int   -- ^ the size of the view
      -> View bytes
-view b offset' size'' = View offset size b
+view b offset'' size'' = View offset size b
   where
-    offset :: Int
-    offset = max offset' 0
+    -- make sure offset is not negative
+    offset' :: Int
+    offset' = max offset'' 0
 
+    -- make sure the offset is not out of bound
+    offset :: Int
+    offset = min offset' (length b - 1)
+
+    -- make sure length is not negative
     size' :: Int
     size' = max size'' 0
 
+    -- make sure the length is not out of the bound
     size :: Int
     size = min size' (length b - offset)
 
