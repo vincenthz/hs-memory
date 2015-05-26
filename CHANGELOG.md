@@ -1,6 +1,9 @@
 ## 0.4
 
-* add Ord instances for SipHash and FnvHash (Nicolas Di Prima)
+* Add Ord instances for SipHash and FnvHash (Nicolas Di Prima)
+* Fix GHC-7.2 build by defining unsafeShiftL (Adam Bergmark)
+* Fix show instance of Bytes to properly display each bytes instead of just the end one
+* Add View type that emulate a view on a ByteArray type (Nicolas Di Prima)
 
 ## 0.3
 
