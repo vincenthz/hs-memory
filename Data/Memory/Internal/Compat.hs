@@ -66,7 +66,7 @@ byteSwap16 w =
     (w `shiftR` 8) .|. (w `shiftL` 8)
 #endif
 
-#if !(MIN_VERSION_base(4,4,0))
+#if !(MIN_VERSION_base(4,5,0))
 unsafeShiftL :: Bits a => a -> Int -> a
 unsafeShiftL = shiftL
 
