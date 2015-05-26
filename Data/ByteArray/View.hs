@@ -37,7 +37,7 @@ instance ByteArrayAccess bytes => Ord (View bytes) where
     compare v1 v2 = unsafeDoIO $
         withByteArray v1 $ \ptr1 ->
         withByteArray v2 $ \ptr2 ->
-            memCompare ptr1 ptr2 (max (viewSize v1) (viewSize v2))
+            memCompare ptr1 ptr2 (min (viewSize v1) (viewSize v2))
 
 instance ByteArrayAccess bytes => Show (View bytes) where
     showsPrec p v r = showsPrec p (viewUnpackChars v []) r
