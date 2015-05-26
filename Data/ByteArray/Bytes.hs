@@ -162,10 +162,10 @@ bytesUnpackChars (Bytes mba) xs = chunkLoop 0#
         loop (idx +# chunkLenM1 -# 1#) paramAcc
       where loop i acc
                 | booleanPrim (i ==# idx) = do
-                    c <- rChar idx
+                    c <- rChar i
                     return (c : acc)
                 | otherwise = do
-                    c <- rChar idx
+                    c <- rChar i
                     loop (i -# 1#) (c : acc)
 
     rChar :: Int# -> IO Char
