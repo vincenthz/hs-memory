@@ -86,7 +86,7 @@ takeView :: ByteArrayAccess bytes
          => bytes -- ^ byte aray
          -> Int   -- ^ size of the view
          -> View bytes
-takeView b size = View 0 sz b
+takeView b size = view b 0 sz
   where
     sz :: Int
     sz = min (length b) size
@@ -97,7 +97,7 @@ dropView :: ByteArrayAccess bytes
          => bytes -- ^ byte array
          -> Int   -- ^ the number of bytes do dropped before creating the view
          -> View bytes
-dropView b offset = View offset' (length b - offset') b
+dropView b offset = view b offset' (length b - offset')
   where
     offset' :: Int
     offset' = min (length b) offset
