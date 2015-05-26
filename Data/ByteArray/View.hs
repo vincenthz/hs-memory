@@ -67,8 +67,8 @@ viewUnpackChars v xs = chunkLoop 0
         loop (idx + chunkLenM1 - 1) paramAcc
       where
         loop i acc
-            | i == idx  = (rChar idx : acc)
-            | otherwise = loop (i - 1) (rChar idx : acc)
+            | i == idx  = (rChar i : acc)
+            | otherwise = loop (i - 1) (rChar i : acc)
 
     rChar :: Int -> Char
     rChar idx = toEnum $ fromIntegral $ index v idx
