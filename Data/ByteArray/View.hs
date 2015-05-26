@@ -43,6 +43,7 @@ instance ByteArrayAccess bytes => Ord (View bytes) where
             return $ case ret of
                 EQ | length v1 >  length v2 -> GT
                    | length v1 <  length v2 -> LT
+                   | length v1 == length v2 -> EQ
                 _                           -> ret
 
 instance ByteArrayAccess bytes => Show (View bytes) where
