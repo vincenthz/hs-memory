@@ -36,8 +36,12 @@ instance ByteArrayAccess bytes => Eq (View bytes) where
 instance ByteArrayAccess bytes => Ord (View bytes) where
     compare v1 v2 = unsafeDoIO $
         withByteArray v1 $ \ptr1 ->
-        withByteArray v2 $ \ptr2 ->
-            memCompare ptr1 ptr2 (min (viewSize v1) (viewSize v2))
+        withByteArray v2 $ \ptr2 -> do
+            ret <- memCompare ptr1 ptr2 (min (viewSize v1) (viewSize v2))
+            return $ case ret of
+                EQ | length v1 >  length v2 -> GT
+                   | length v1 <  length v2 -> LT
+                _                           -> ret
 
 instance ByteArrayAccess bytes => Show (View bytes) where
     showsPrec p v r = showsPrec p (viewUnpackChars v []) r
