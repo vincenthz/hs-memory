@@ -21,6 +21,7 @@ module Data.ByteArray
     , module Data.ByteArray.Bytes
     , module Data.ByteArray.ScrubbedBytes
     , module Data.ByteArray.MemView
+    , module Data.ByteArray.View
     -- * ByteArray methods
     , module Data.ByteArray.Methods
     ) where
@@ -30,3 +31,4 @@ import           Data.ByteArray.Methods
 import           Data.ByteArray.ScrubbedBytes (ScrubbedBytes)
 import           Data.ByteArray.Bytes         (Bytes)
 import           Data.ByteArray.MemView       (MemView(..))
+import           Data.ByteArray.View          (View, view, takeView, dropView)

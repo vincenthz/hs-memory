@@ -62,6 +62,7 @@ Library
                      Data.ByteArray.ScrubbedBytes
                      Data.ByteArray.Methods
                      Data.ByteArray.MemView
+                     Data.ByteArray.View
   Build-depends:     base >= 4 && < 5
                    , ghc-prim
   -- FIXME armel or mispel is also little endian.
