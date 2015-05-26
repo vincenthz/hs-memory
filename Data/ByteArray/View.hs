@@ -24,6 +24,8 @@ import Foreign.Ptr (plusPtr)
 import Prelude hiding (length, take, drop)
 
 -- | a view on a given bytes
+--
+-- Equality test in constant time
 data View bytes = View
     { viewOffset :: !Int
     , viewSize   :: !Int
