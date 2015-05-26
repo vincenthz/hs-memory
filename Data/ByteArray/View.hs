@@ -79,17 +79,23 @@ view :: ByteArrayAccess bytes
      -> Int   -- ^ the offset to start the byte array on
      -> Int   -- ^ the size of the view
      -> View bytes
-view b offset size = View offset size b
+view b offset' size'' = View offset size b
+  where
+    offset :: Int
+    offset = max offset' 0
+
+    size' :: Int
+    size' = max size'' 0
+
+    size :: Int
+    size = min size' (length b - offset)
 
 -- | create a view from the given bytearray
 takeView :: ByteArrayAccess bytes
          => bytes -- ^ byte aray
          -> Int   -- ^ size of the view
          -> View bytes
-takeView b size = view b 0 sz
-  where
-    sz :: Int
-    sz = min (length b) size
+takeView b size = view b 0 size
 
 -- | create a view from the given byte array
 -- starting after having dropped the fist n bytes
@@ -97,8 +103,4 @@ dropView :: ByteArrayAccess bytes
          => bytes -- ^ byte array
          -> Int   -- ^ the number of bytes do dropped before creating the view
          -> View bytes
-dropView b offset = view b offset' (length b - offset')
-  where
-    offset' :: Int
-    offset' = min (length b) offset
-
+dropView b offset = view b offset (length b - offset)
