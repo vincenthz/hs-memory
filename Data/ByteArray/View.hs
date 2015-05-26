@@ -88,7 +88,7 @@ takeView :: ByteArrayAccess bytes
          -> View bytes
 takeView b size = View 0 sz b
   where
-    sz :: Int 
+    sz :: Int
     sz = min (length b) size
 
 -- | create a view from the given byte array
