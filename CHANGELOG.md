@@ -1,3 +1,7 @@
+## 0.5
+
+* Add Base32 support (Nicolas Di Prima)
+
 ## 0.4
 
 * Add Ord instances for SipHash and FnvHash (Nicolas Di Prima)
