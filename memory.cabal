@@ -49,6 +49,7 @@ Library
                      Data.Memory.PtrMethods
                      Data.Memory.ExtendedWords
                      Data.Memory.Encoding.Base16
+                     Data.Memory.Encoding.Base32
                      Data.Memory.Encoding.Base64
   Other-modules:     Data.Memory.Internal.Compat
                      Data.Memory.Internal.CompatPrim
