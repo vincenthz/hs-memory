@@ -63,10 +63,28 @@ base64Kats =
 base16Kats =
     [ ("this is a string", "74686973206973206120737472696e67") ]
 
+base32Kats =
+    [ ("-pleasure.", "FVYGYZLBON2XEZJO")
+    , ("pleasure.",  "OBWGKYLTOVZGKLQ=")
+    , ("leasure.",   "NRSWC43VOJSS4===")
+    , ("easure.",    "MVQXG5LSMUXA====")
+    , ("asure.",     "MFZXK4TFFY======")
+    , ("sure.",      "ON2XEZJO")
+    , ("ure.",       "OVZGKLQ=")
+    , ("re.",        "OJSS4===")
+    , ("e.",         "MUXA====")
+    , (".",          "FY======")
+    , ("",           "")
+    ]
+
 encodingTests witnessID =
     [ testGroup "BASE64"
         [ testGroup "encode-KAT" encodeKats64
         , testGroup "decode-KAT" decodeKats64
+        ]
+    , testGroup "BASE32"
+        [ testGroup "encode-KAT" encodeKats32
+        , testGroup "decode-KAT" decodeKats32
         ]
     , testGroup "BASE16"
         [ testGroup "encode-KAT" encodeKats16
@@ -76,6 +94,8 @@ encodingTests witnessID =
   where
         encodeKats64 = map (toTest B.Base64) $ zip [1..] base64Kats
         decodeKats64 = map (toBackTest B.Base64) $ zip [1..] base64Kats
+        encodeKats32 = map (toTest B.Base32) $ zip [1..] base32Kats
+        decodeKats32 = map (toBackTest B.Base32) $ zip [1..] base32Kats
         encodeKats16 = map (toTest B.Base16) $ zip [1..] base16Kats
         decodeKats16 = map (toBackTest B.Base16) $ zip [1..] base16Kats
 
