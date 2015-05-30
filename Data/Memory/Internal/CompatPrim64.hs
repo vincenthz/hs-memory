@@ -154,7 +154,7 @@ readWord64_OffAddr# = readWord8OffAddr#
 
 #elif WORD_SIZE_IN_BITS == 32
 import GHC.IntWord64
-import GHC.Prim (Word#)
+import GHC.Prim (Word#, State#, readWord4OffAddr#, (+#))
 
 timesWord64# :: Word64# -> Word64# -> Word64#
 timesWord64# a b =
@@ -168,7 +168,7 @@ w64# _ hw lw =
         !l = wordToWord64# lw
      in or64# (uncheckedShiftL64# h 32#) l
 
-readWord64_OffAddr# :: Addr# -> Int# -> State# -> (# State# s, Word64# #)
+readWord64_OffAddr# :: Addr# -> Int# -> State# s -> (# State# s, Word64# #)
 readWord64_OffAddr# a i s =
     case readWord4OffAddr# a i s of
         (# s2, v1 #) ->
