@@ -1,6 +1,7 @@
 ## 0.5
 
 * Add Base32 support (Nicolas Di Prima)
+* Fix build on 32 bit by simplifying scrubber, and adding Word64 type + operations compatibility
 
 ## 0.4
 
