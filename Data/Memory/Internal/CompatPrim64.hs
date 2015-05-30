@@ -150,7 +150,7 @@ w64# w _ _ = w
 
 #elif WORD_SIZE_IN_BITS == 32
 import GHC.IntWord64
-import GHC.Prim (Word#, State#, readWord4OffAddr#, (+#))
+import GHC.Prim (Word#)
 
 timesWord64# :: Word64# -> Word64# -> Word64#
 timesWord64# a b =
