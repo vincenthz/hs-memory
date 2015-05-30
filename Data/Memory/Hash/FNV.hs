@@ -90,5 +90,5 @@ fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = 0x100000001b3## `timesWord64#` (acc `xor#` v)
+                        let !nacc = 0x100000001b3## `timesWord64#` (acc `xor64#` v)
                          in loop nacc (i +# 1#) s2
