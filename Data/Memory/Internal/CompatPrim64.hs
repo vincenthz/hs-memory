@@ -47,6 +47,7 @@ module Data.Memory.Internal.CompatPrim64
     , int64ToInt#
     , wordToWord64#
     , word64ToWord#
+    , w64#
     ) where
 
 
@@ -144,6 +145,9 @@ word64ToWord# w = w
 timesWord64# :: Word64# -> Word64# -> Word64#
 timesWord64# = timesWord#
 
+w64# :: Word# -> Word# -> Word# -> Word64#
+w64# w _ _ = w
+
 #elif WORD_SIZE_IN_BITS == 32
 import GHC.IntWord64
 
@@ -152,6 +156,12 @@ timesWord64# a b =
     let !ai = word64ToInt64# a
         !bi = word64ToInt64# b
      in int64ToWord64# (timesInt64# ai bi)
+
+w64# :: Word# -> Word# -> Word# -> Word64#
+w64# _ hw lw =
+    let !h = wordToWord64# hw
+        !l = wordToWord64# lw
+     in or64# (uncheckedShiftL64# h 32#) l
 #else
 #error "not a supported architecture. supported WORD_SIZE_IN_BITS is 32 bits or 64 bits"
 #endif

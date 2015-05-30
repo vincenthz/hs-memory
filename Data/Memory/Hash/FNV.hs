@@ -69,7 +69,7 @@ fnv1a (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
 
 -- | compute FNV1 (64 bit variant) of a raw piece of memory
 fnv1_64 :: Ptr Word8 -> Int -> IO FnvHash64
-fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
+fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
   where 
         loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
         loop !acc i s
@@ -77,12 +77,18 @@ fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = (0x100000001b3## `timesWord64#` acc) `xor64#` v
+                        let !nacc = (fnv64Prime `timesWord64#` acc) `xor64#` v
                          in loop nacc (i +# 1#) s2
+
+        fnv64Const :: Word64#
+        !fnv64Const = w64# 0xcbf29ce484222325## 0xcbf29ce4## 0x84222325##
+
+        fnv64Prime :: Word64#
+        !fnv64Prime = w64# 0x100000001b3## 0x100## 0x000001b3##
 
 -- | compute FNV1a (64 bit variant) of a raw piece of memory
 fnv1a_64 :: Ptr Word8 -> Int -> IO FnvHash64
-fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
+fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
   where 
         loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
         loop !acc i s
@@ -90,5 +96,11 @@ fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = 0x100000001b3## `timesWord64#` (acc `xor64#` v)
+                        let !nacc = fnv64Prime `timesWord64#` (acc `xor64#` v)
                          in loop nacc (i +# 1#) s2
+
+        fnv64Const :: Word64#
+        !fnv64Const = w64# 0xcbf29ce484222325## 0xcbf29ce4## 0x84222325##
+
+        fnv64Prime :: Word64#
+        !fnv64Prime = w64# 0x100000001b3## 0x100## 0x000001b3##
