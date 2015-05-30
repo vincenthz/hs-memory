@@ -146,6 +146,12 @@ timesWord64# = timesWord#
 
 #elif WORD_SIZE_IN_BITS == 32
 import GHC.IntWord64
+
+timesWord64# :: Word64# -> Word64# -> Word64#
+timesWord64# a b =
+    let !ai = word64ToInt64# a
+        !bi = word64ToInt64# b
+     in int64ToWord64# (timesInt64# ai bi)
 #else
 #error "not a supported architecture. supported WORD_SIZE_IN_BITS is 32 bits or 64 bits"
 #endif
