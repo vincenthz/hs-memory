@@ -53,7 +53,6 @@ module Data.Memory.Internal.CompatPrim64
 
 #if WORD_SIZE_IN_BITS == 64
 import GHC.Prim hiding (Word64#, Int64#)
---import GHC.Types
 
 #if __GLASGOW_HASKELL__ >= 708
 type OutBool = Int#

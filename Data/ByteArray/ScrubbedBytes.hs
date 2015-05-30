@@ -21,6 +21,7 @@ import           Data.Memory.PtrMethods          (memCopy, memConstEqual)
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
 import           Data.Memory.Internal.Imports
+import           Data.Memory.Internal.Scrubber   (getScrubber)
 import           Data.ByteArray.Types
 
 -- | ScrubbedBytes is a memory chunk which have the properties of:
@@ -63,31 +64,10 @@ newScrubbedBytes (I# sz)
     | otherwise               = IO $ \s ->
         case newAlignedPinnedByteArray# sz 8# s of
             (# s1, mbarr #) ->
-                let !scrubber = getScrubber
+                let !scrubber = getScrubber sz
                     !mba      = ScrubbedBytes mbarr
                  in case mkWeak# mbarr () (scrubber (byteArrayContents# (unsafeCoerce# mbarr)) >> touchScrubbedBytes mba) s1 of
                     (# s2, _ #) -> (# s2, mba #)
-  where
-        getScrubber :: Addr# -> IO ()
-        getScrubber = eitherDivideBy8# sz scrubber64 scrubber8
-
-        scrubber64 :: Int# -> Addr# -> IO ()
-        scrubber64 sz64 addr = IO $ \s -> (# loop sz64 addr s, () #)
-          where loop :: Int# -> Addr# -> State# RealWorld -> State# RealWorld
-                loop n a s
-                    | booleanPrim (n ==# 0#) = s
-                    | otherwise              =
-                        case writeWord64OffAddr# a 0# 0## s of
-                            s' -> loop (n -# 1#) (plusAddr# a 8#) s'
-
-        scrubber8 :: Int# -> Addr# -> IO ()
-        scrubber8 sz8 addr = IO $ \s -> (# loop sz8 addr s, () #)
-          where loop :: Int# -> Addr# -> State# RealWorld -> State# RealWorld
-                loop n a s
-                    | booleanPrim (n ==# 0#) = s
-                    | otherwise              =
-                        case writeWord8OffAddr# a 0# 0## s of
-                            s' -> loop (n -# 1#) (plusAddr# a 1#) s'
 
 scrubbedBytesAllocRet :: Int -> (Ptr p -> IO a) -> IO (a, ScrubbedBytes)
 scrubbedBytesAllocRet sz f = do
