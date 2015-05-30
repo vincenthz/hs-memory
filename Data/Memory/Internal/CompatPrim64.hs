@@ -48,7 +48,6 @@ module Data.Memory.Internal.CompatPrim64
     , wordToWord64#
     , word64ToWord#
     , w64#
-    , readWord64_OffAddr#
     ) where
 
 
@@ -149,9 +148,6 @@ timesWord64# = timesWord#
 w64# :: Word# -> Word# -> Word# -> Word64#
 w64# w _ _ = w
 
-readWord64_OffAddr# :: Addr# -> Int# -> State# s -> (# State# s, Word64# #)
-readWord64_OffAddr# = readWord8OffAddr#
-
 #elif WORD_SIZE_IN_BITS == 32
 import GHC.IntWord64
 import GHC.Prim (Word#, State#, readWord4OffAddr#, (+#))
@@ -167,14 +163,6 @@ w64# _ hw lw =
     let !h = wordToWord64# hw
         !l = wordToWord64# lw
      in or64# (uncheckedShiftL64# h 32#) l
-
-readWord64_OffAddr# :: Addr# -> Int# -> State# s -> (# State# s, Word64# #)
-readWord64_OffAddr# a i s =
-    case readWord4OffAddr# a i s of
-        (# s2, v1 #) ->
-            case readWord4OffAddr# a (i +# 4#) s2 of
-                (# s3, v2 #) ->
-                    (# s3, or64# (uncheckedShiftL64# (wordToWord64# v1) 32#) (wordToWord64# v2) #)
 #else
 #error "not a supported architecture. supported WORD_SIZE_IN_BITS is 32 bits or 64 bits"
 #endif

@@ -75,9 +75,9 @@ fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
         loop !acc i s
             | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
             | otherwise             =
-                case readWord64_OffAddr# addr i s of
+                case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = (fnv64Prime `timesWord64#` acc) `xor64#` v
+                        let !nacc = (fnv64Prime `timesWord64#` acc) `xor64#` (wordToWord64# v)
                          in loop nacc (i +# 1#) s2
 
         fnv64Const :: Word64#
@@ -94,9 +94,9 @@ fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
         loop !acc i s
             | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
             | otherwise             =
-                case readWord64_OffAddr# addr i s of
+                case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = fnv64Prime `timesWord64#` (acc `xor64#` v)
+                        let !nacc = fnv64Prime `timesWord64#` (acc `xor64#` wordToWord64# v)
                          in loop nacc (i +# 1#) s2
 
         fnv64Const :: Word64#
