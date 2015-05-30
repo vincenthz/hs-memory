@@ -53,6 +53,7 @@ Library
                      Data.Memory.Encoding.Base64
   Other-modules:     Data.Memory.Internal.Compat
                      Data.Memory.Internal.CompatPrim
+                     Data.Memory.Internal.CompatPrim64
                      Data.Memory.Internal.DeepSeq
                      Data.Memory.Internal.Imports
                      Data.Memory.Hash.SipHash

@@ -26,9 +26,10 @@ module Data.Memory.Hash.FNV
 
 import           Data.Memory.Internal.Compat ()
 import           Data.Memory.Internal.CompatPrim
+import           Data.Memory.Internal.CompatPrim64
 import           Data.Memory.Internal.Imports
 import           GHC.Word
-import           GHC.Prim
+import           GHC.Prim hiding (Word64#, Int64#)
 import           GHC.Types
 import           GHC.Ptr
 
@@ -70,24 +71,24 @@ fnv1a (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
 fnv1_64 :: Ptr Word8 -> Int -> IO FnvHash64
 fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
   where 
-        loop :: Word# -> Int# -> State# s -> (# State# s, FnvHash64 #)
+        loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
         loop !acc i s
             | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = (0x100000001b3## `timesWord#` acc) `xor#` v
+                        let !nacc = (0x100000001b3## `timesWord64#` acc) `xor64#` v
                          in loop nacc (i +# 1#) s2
 
 -- | compute FNV1a (64 bit variant) of a raw piece of memory
 fnv1a_64 :: Ptr Word8 -> Int -> IO FnvHash64
 fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop 0xcbf29ce484222325## 0# s
   where 
-        loop :: Word# -> Int# -> State# s -> (# State# s, FnvHash64 #)
+        loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
         loop !acc i s
             | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = 0x100000001b3## `timesWord#` (acc `xor#` v)
+                        let !nacc = 0x100000001b3## `timesWord64#` (acc `xor#` v)
                          in loop nacc (i +# 1#) s2
