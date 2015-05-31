@@ -19,7 +19,10 @@ module Data.Memory.Endian
 import Data.Word (Word16, Word32, Word64)
 import Foreign.Storable
 #if !defined(ARCH_IS_LITTLE_ENDIAN) && !defined(ARCH_IS_BIG_ENDIAN)
+import Data.Word (Word8)
 import Data.Memory.Internal.Compat (unsafeDoIO)
+import Foreign.Marshal.Alloc
+import Foreign.Ptr
 #endif
 
 import Data.Memory.Internal.Compat (byteSwap64, byteSwap32, byteSwap16)
