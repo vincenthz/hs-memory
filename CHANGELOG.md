@@ -1,3 +1,8 @@
+## 0.6
+
+* fix compilation on architecture where endianness is not a compile time define related
+  to their cabal arch().
+
 ## 0.5
 
 * Add Base32 support (Nicolas Di Prima)
