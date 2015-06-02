@@ -1,6 +1,12 @@
+## 0.7
+
+* Fix fixed sized scrubber written too hastily, that would zero out memory, as the index
+  was written through byte size, whereas the primitive would consider it as WordX type index.
+  it would helps if Ghc.Prim had better documentation.
+
 ## 0.6
 
-* fix compilation on architecture where endianness is not a compile time define related
+* Fix compilation on architecture where endianness is not a compile time define related
   to their cabal arch().
 
 ## 0.5
