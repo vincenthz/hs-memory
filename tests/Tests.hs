@@ -133,7 +133,7 @@ main = defaultMain $ testGroup "memory"
     basicProperties witnessID =
         [ testProperty "unpack . pack == id" $ \(Words8 l) -> l == (B.unpack . witnessID . B.pack $ l)
         , testProperty "self-eq" $ \(Words8 l) -> let b = witnessID . B.pack $ l in b == b
-        , testProperty "empty-eq" $ \(Words8 l) ->
+        , testProperty "add-empty-eq" $ \(Words8 l) ->
             let b = witnessID $ B.pack l
              in B.append b B.empty == b
         , testProperty "zero" $ \(Positive n) ->
