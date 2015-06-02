@@ -1,5 +1,5 @@
 Name:                memory
-Version:             0.6
+Version:             0.7
 Synopsis:            memory and related abtraction stuff
 Description:
     Chunk of memory, polymorphic byte array management and manipulation
