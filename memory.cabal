@@ -11,6 +11,8 @@ Description:
     * Raw memory IO operations (memory set, memory copy, ..)
     .
     * Aliasing with endianness support.
+    .
+    * Encoding : Base16, Base32, Base64.
 License:             BSD3
 License-file:        LICENSE
 Copyright:           Vincent Hanquez <vincent@snarc.org>
