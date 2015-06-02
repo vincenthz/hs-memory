@@ -30,35 +30,35 @@ getScrubber sz
 #if WORD_SIZE_IN_BITS == 64
         scrub8 a = IO $ \s -> (# writeWord64OffAddr# a 0# 0## s, () #)
         scrub16 a = IO $ \s1 ->
-            let !s2 = writeWord64OffAddr# a  0# 0## s1
-                !s3 = writeWord64OffAddr# a  8# 0## s2
+            let !s2 = writeWord64OffAddr# a 0# 0## s1
+                !s3 = writeWord64OffAddr# a 1# 0## s2
              in (# s3, () #)
         scrub32 a = IO $ \s1 ->
-            let !s2 = writeWord64OffAddr# a  0# 0## s1
-                !s3 = writeWord64OffAddr# a  8# 0## s2
-                !s4 = writeWord64OffAddr# a 16# 0## s3
-                !s5 = writeWord64OffAddr# a 24# 0## s4
+            let !s2 = writeWord64OffAddr# a 0# 0## s1
+                !s3 = writeWord64OffAddr# a 1# 0## s2
+                !s4 = writeWord64OffAddr# a 2# 0## s3
+                !s5 = writeWord64OffAddr# a 3# 0## s4
              in (# s5, () #)
 #else
         scrub8 a = IO $ \s1 ->
-            let !s2 = writeWord32OffAddr# a  0# 0## s1
-                !s3 = writeWord32OffAddr# a  4# 0## s2
+            let !s2 = writeWord32OffAddr# a 0# 0## s1
+                !s3 = writeWord32OffAddr# a 1# 0## s2
              in (# s3, () #)
         scrub16 a = IO $ \s1 ->
-            let !s2 = writeWord32OffAddr# a  0# 0## s1
-                !s3 = writeWord32OffAddr# a  4# 0## s2
-                !s4 = writeWord32OffAddr# a  8# 0## s3
-                !s5 = writeWord32OffAddr# a 12# 0## s4
+            let !s2 = writeWord32OffAddr# a 0# 0## s1
+                !s3 = writeWord32OffAddr# a 1# 0## s2
+                !s4 = writeWord32OffAddr# a 2# 0## s3
+                !s5 = writeWord32OffAddr# a 3# 0## s4
              in (# s5, () #)
         scrub32 a = IO $ \s1 ->
-            let !s2 = writeWord32OffAddr# a  0# 0## s1
-                !s3 = writeWord32OffAddr# a  4# 0## s2
-                !s4 = writeWord32OffAddr# a  8# 0## s3
-                !s5 = writeWord32OffAddr# a 12# 0## s4
-                !s6 = writeWord32OffAddr# a 16# 0## s5
-                !s7 = writeWord32OffAddr# a 20# 0## s6
-                !s8 = writeWord32OffAddr# a 24# 0## s7
-                !s9 = writeWord32OffAddr# a 28# 0## s8
+            let !s2 = writeWord32OffAddr# a 0# 0## s1
+                !s3 = writeWord32OffAddr# a 1# 0## s2
+                !s4 = writeWord32OffAddr# a 2# 0## s3
+                !s5 = writeWord32OffAddr# a 3# 0## s4
+                !s6 = writeWord32OffAddr# a 4# 0## s5
+                !s7 = writeWord32OffAddr# a 5# 0## s6
+                !s8 = writeWord32OffAddr# a 6# 0## s7
+                !s9 = writeWord32OffAddr# a 7# 0## s8
              in (# s9, () #)
 #endif
 
