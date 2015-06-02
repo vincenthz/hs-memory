@@ -122,7 +122,7 @@ parsingTests witnessID =
     ]
 
 main = defaultMain $ testGroup "memory"
-    [ localOption (QuickCheckTests 500) $ testGroupBackends "basic" basicProperties
+    [ localOption (QuickCheckTests 5000) $ testGroupBackends "basic" basicProperties
     , testGroupBackends "encoding" encodingTests
     , testGroupBackends "parsing" parsingTests
     , testGroupBackends "hashing" $ \witnessID ->
