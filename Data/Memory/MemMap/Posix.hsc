@@ -51,8 +51,13 @@ foreign import ccall unsafe "mmap"
 foreign import ccall unsafe "munmap"
     c_munmap :: Ptr a -> CSize -> IO CInt
 
+#if defined(POSIX_MADV_NORMAL)
+foreign import ccall unsafe "posix_madvise"
+    c_madvise :: Ptr a -> CSize -> CInt -> IO CInt
+#else
 foreign import ccall unsafe "madvise"
     c_madvise :: Ptr a -> CSize -> CInt -> IO CInt
+#endif
 
 foreign import ccall unsafe "msync"
     c_msync :: Ptr a -> CSize -> CInt -> IO CInt
@@ -159,12 +164,19 @@ memoryUnmap ptr sz = throwErrnoIfMinus1_ "munmap" (c_munmap ptr sz)
 memoryAdvise :: Ptr a -> CSize -> MemoryAdvice -> IO ()
 memoryAdvise ptr sz adv = throwErrnoIfMinus1_ "madvise" (c_madvise ptr sz cadv)
   where cadv = toAdvice adv
-
+#if defined(POSIX_MADV_NORMAL)
+        toAdvice MemoryAdviceNormal = (#const POSIX_MADV_NORMAL)
+        toAdvice MemoryAdviceRandom = (#const POSIX_MADV_RANDOM)
+        toAdvice MemoryAdviceSequential = (#const POSIX_MADV_SEQUENTIAL)
+        toAdvice MemoryAdviceWillNeed = (#const POSIX_MADV_WILLNEED)
+        toAdvice MemoryAdviceDontNeed = (#const POSIX_MADV_DONTNEED)
+#else
         toAdvice MemoryAdviceNormal = (#const MADV_NORMAL)
         toAdvice MemoryAdviceRandom = (#const MADV_RANDOM)
         toAdvice MemoryAdviceSequential = (#const MADV_SEQUENTIAL)
         toAdvice MemoryAdviceWillNeed = (#const MADV_WILLNEED)
         toAdvice MemoryAdviceDontNeed = (#const MADV_DONTNEED)
+#endif
 
 -- | lock a range of process address space
 --
