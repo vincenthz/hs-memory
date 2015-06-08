@@ -65,11 +65,21 @@ foreign import ccall unsafe "msync"
 foreign import ccall unsafe "mprotect"
     c_mprotect :: Ptr a -> CSize -> CInt -> IO CInt
 
+#ifndef __HAIKU__
 foreign import ccall unsafe "mlock"
     c_mlock :: Ptr a -> CSize -> IO CInt
+#else
+c_mlock :: Ptr a -> CSize -> IO CInt
+c_mlock _ _ = return (-1)
+#endif
 
+#ifndef __HAIKU__
 foreign import ccall unsafe "munlock"
     c_munlock :: Ptr a -> CSize -> IO CInt
+#else
+c_munlock :: Ptr a -> CSize -> IO CInt
+c_munlock _ _ = return (-1)
+#endif
 
 foreign import ccall unsafe "sysconf"
     c_sysconf :: CInt -> CLong
