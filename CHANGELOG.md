@@ -1,3 +1,7 @@
+## 0.8
+
+* Fix compilation on Haiku (Jessica Hamilton)
+
 ## 0.7
 
 * Fix fixed sized scrubber written too hastily, that would zero out memory, as the index
