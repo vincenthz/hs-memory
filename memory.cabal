@@ -1,6 +1,6 @@
 Name:                memory
 Version:             0.7
-Synopsis:            memory and related abtraction stuff
+Synopsis:            memory and related abstraction stuff
 Description:
     Chunk of memory, polymorphic byte array management and manipulation
     .
