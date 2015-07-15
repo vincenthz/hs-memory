@@ -60,6 +60,17 @@ base64Kats =
     , ("sure.", "c3VyZS4=")
     ]
 
+base64URLKats =
+    [ ("pleasure.", "cGxlYXN1cmUu")
+    , ("leasure.", "bGVhc3VyZS4")
+    , ("easure.", "ZWFzdXJlLg")
+    , ("asure.", "YXN1cmUu")
+    , ("sure.", "c3VyZS4")
+    , ("\DC4\251\156\ETX\217~", "FPucA9l-") -- From RFC4648
+    , ("\DC4\251\156\ETX\217\DEL", "FPucA9l_")
+    , ("", "")
+    ]
+
 base16Kats =
     [ ("this is a string", "74686973206973206120737472696e67") ]
 
@@ -82,6 +93,10 @@ encodingTests witnessID =
         [ testGroup "encode-KAT" encodeKats64
         , testGroup "decode-KAT" decodeKats64
         ]
+    , testGroup "BASE64URL"
+        [ testGroup "encode-KAT" encodeKats64URL
+        , testGroup "decode-KAT" decodeKats64URL
+        ]
     , testGroup "BASE32"
         [ testGroup "encode-KAT" encodeKats32
         , testGroup "decode-KAT" decodeKats32
@@ -98,6 +113,8 @@ encodingTests witnessID =
         decodeKats32 = map (toBackTest B.Base32) $ zip [1..] base32Kats
         encodeKats16 = map (toTest B.Base16) $ zip [1..] base16Kats
         decodeKats16 = map (toBackTest B.Base16) $ zip [1..] base16Kats
+        encodeKats64URL = map (toTest B.Base64URL) $ zip [1..] base64URLKats
+        decodeKats64URL = map (toBackTest B.Base64URL) $ zip [1..] base64URLKats
 
         toTest :: B.Base -> (Int, (String, String)) -> TestTree
         toTest base (i, (inp, out)) = testCase (show i) $
