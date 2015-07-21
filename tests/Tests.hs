@@ -94,8 +94,8 @@ encodingTests witnessID =
         , testGroup "decode-KAT" decodeKats64
         ]
     , testGroup "BASE64URL"
-        [ testGroup "encode-KAT" encodeKats64URL
-        , testGroup "decode-KAT" decodeKats64URL
+        [ testGroup "encode-KAT" encodeKats64URLUnpadded
+        , testGroup "decode-KAT" decodeKats64URLUnpadded
         ]
     , testGroup "BASE32"
         [ testGroup "encode-KAT" encodeKats32
@@ -113,8 +113,8 @@ encodingTests witnessID =
         decodeKats32 = map (toBackTest B.Base32) $ zip [1..] base32Kats
         encodeKats16 = map (toTest B.Base16) $ zip [1..] base16Kats
         decodeKats16 = map (toBackTest B.Base16) $ zip [1..] base16Kats
-        encodeKats64URL = map (toTest B.Base64URL) $ zip [1..] base64URLKats
-        decodeKats64URL = map (toBackTest B.Base64URL) $ zip [1..] base64URLKats
+        encodeKats64URLUnpadded = map (toTest B.Base64URLUnpadded) $ zip [1..] base64URLKats
+        decodeKats64URLUnpadded = map (toBackTest B.Base64URLUnpadded) $ zip [1..] base64URLKats
 
         toTest :: B.Base -> (Int, (String, String)) -> TestTree
         toTest base (i, (inp, out)) = testCase (show i) $

@@ -16,9 +16,9 @@ module Data.Memory.Encoding.Base64
     ( toBase64
     , toBase64URL
     , unBase64Length
-    , unBase64URLLength
+    , unBase64LengthUnpadded
     , fromBase64
-    , fromBase64URL
+    , fromBase64URLUnpadded
     ) where
 
 import           Control.Monad
@@ -31,38 +31,31 @@ import           GHC.Word
 import           Foreign.Storable
 import           Foreign.Ptr (Ptr)
 
--- | Transform a number of bytes pointed by.@src in the base64 binary representation in @dst
+-- | Transform a number of bytes pointed by @src@ to base64 binary representation in @dst@
 --
--- destination memory need to be of correct size, otherwise it will lead
+-- The destination memory need to be of correct size, otherwise it will lead
 -- to really bad things.
 toBase64 :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
-toBase64 dst src len = loop 0 0
+toBase64 dst src len = toBase64Internal set dst src len True
   where
-        eqChar = 0x3d
-
         !set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"#
 
-        loop i di
-            | i >= len  = return ()
-            | otherwise = do
-                a <- peekByteOff src i
-                b <- if i + 1 >= len then return 0 else peekByteOff src (i+1)
-                c <- if i + 2 >= len then return 0 else peekByteOff src (i+2)
-
-                let (w,x,y,z) = convert3 set a b c
-
-                pokeByteOff dst di     w
-                pokeByteOff dst (di+1) x
-                pokeByteOff dst (di+2) (if i + 1 >= len then eqChar else y)
-                pokeByteOff dst (di+3) (if i + 2 >= len then eqChar else z)
-
-                loop (i+3) (di+4)
-
-toBase64URL :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
-toBase64URL dst src len = loop 0 0
+-- | Transform a number of bytes pointed by @src@ to, URL-safe base64 binary
+-- representation in @dst@. The result will be either padded or unpadded,
+-- depending on the boolean @padded@ argument.
+--
+-- The destination memory need to be of correct size, otherwise it will lead
+-- to really bad things.
+toBase64URL :: Bool -> Ptr Word8 -> Ptr Word8 -> Int -> IO ()
+toBase64URL padded dst src len = toBase64Internal set dst src len padded
   where
         !set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"#
 
+toBase64Internal :: Addr# -> Ptr Word8 -> Ptr Word8 -> Int -> Bool -> IO ()
+toBase64Internal table dst src len padded = loop 0 0
+  where
+        eqChar = 0x3d :: Word8
+
         loop i di
             | i >= len  = return ()
             | otherwise = do
@@ -70,12 +63,21 @@ toBase64URL dst src len = loop 0 0
                 b <- if i + 1 >= len then return 0 else peekByteOff src (i+1)
                 c <- if i + 2 >= len then return 0 else peekByteOff src (i+2)
 
-                let (w,x,y,z) = convert3 set a b c
+                let (w,x,y,z) = convert3 table a b c
 
                 pokeByteOff dst di     w
                 pokeByteOff dst (di+1) x
-                unless (i + 1 >= len) $ pokeByteOff dst (di+2) y
-                unless (i + 2 >= len) $ pokeByteOff dst (di+3) z
+
+                if i + 1 < len
+                    then
+                        pokeByteOff dst (di+2) y
+                    else
+                        when padded (pokeByteOff dst (di+2) eqChar)
+                if i + 2 < len
+                    then
+                        pokeByteOff dst (di+3) z
+                    else
+                        when padded (pokeByteOff dst (di+3) eqChar)
 
                 loop (i+3) (di+4)
 
@@ -107,18 +109,28 @@ unBase64Length src len
         eqAscii :: Word8
         eqAscii = fromIntegral (fromEnum '=')
 
-unBase64URLLength :: Int -> Maybe Int
-unBase64URLLength len = case r of
+-- | Get the length needed for the destination buffer for an
+-- <http://tools.ietf.org/html/rfc4648#section-3.2 unpadded> base64 decoding.
+--
+-- If the length of the encoded string is a multiple of 4, plus one, Nothing is
+-- returned. Any other value can be valid without padding.
+unBase64LengthUnpadded :: Int -> Maybe Int
+unBase64LengthUnpadded len = case r of
     0 -> Just (3*q)
     2 -> Just (3*q + 1)
     3 -> Just (3*q + 2)
     _ -> Nothing
   where (q, r) = len `divMod` 4
 
-fromBase64URL :: Ptr Word8 -> Ptr Word8 -> Int -> IO (Maybe Int)
-fromBase64URL dst src len = loop 0 0
+
+fromBase64URLUnpadded :: Ptr Word8 -> Ptr Word8 -> Int -> IO (Maybe Int)
+fromBase64URLUnpadded dst src len = fromBase64Unpadded rsetURL dst src len
+
+fromBase64Unpadded :: (Word8 -> Word8) -> Ptr Word8 -> Ptr Word8 -> Int -> IO (Maybe Int)
+fromBase64Unpadded rset dst src len = loop 0 0
   where loop di i
             | i == len       = return Nothing
+            | i == len - 1   = return Nothing -- Shouldn't happen if len is valid
             | i == len - 2   = do
                 a <- peekByteOff src i
                 b <- peekByteOff src (i+1)
@@ -185,12 +197,12 @@ fromBase64URL dst src len = loop 0 0
                         z = (rc `unsafeShiftL` 6) .|. rd
                      in Right (x,y,z)
 
-        rset :: Word8 -> Word8
-        rset (W8# w)
-            | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
-            | otherwise                        = 0xff
+rsetURL :: Word8 -> Word8
+rsetURL (W8# w)
+    | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
+    | otherwise                        = 0xff
 
-        !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+  where !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x3e\xff\xff\
                      \\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\xff\xff\xff\xff\xff\xff\
@@ -207,7 +219,7 @@ fromBase64URL dst src len = loop 0 0
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"#
 
--- | convert from base64 in @src to binary in @dst, using the number of bytes specified
+-- | convert from base64 in @src@ to binary in @dst@, using the number of bytes specified
 --
 -- the user should use unBase64Length to compute the correct length, or check that
 -- the length specification is proper. no check is done here.

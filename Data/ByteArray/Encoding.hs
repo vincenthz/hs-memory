@@ -22,36 +22,40 @@ import           Data.Memory.Encoding.Base32
 import           Data.Memory.Encoding.Base64
 
 -- | Different bases that can be used
-data Base = Base16 -- ^ similar to hexadecimal
+--
+-- See <http://tools.ietf.org/html/rfc4648 RFC4648> for details.
+-- In particular, Base64 can be standard or
+-- <http://tools.ietf.org/html/rfc4648#section-5 URL-safe>. URL-safe
+-- encoding is often used in other specifications without
+-- <http://tools.ietf.org/html/rfc4648#section-3.2 padding> characters.
+data Base = Base16            -- ^ similar to hexadecimal
           | Base32
-          | Base64    -- ^ standard Base64
-          | Base64URL -- ^ unpadded URL-safe Base64
+          | Base64            -- ^ standard Base64
+          | Base64URLUnpadded -- ^ unpadded URL-safe Base64
           deriving (Show,Eq)
 
 -- | Convert a bytearray to the equivalent representation in a specific Base
 convertToBase :: (ByteArrayAccess bin, ByteArray bout) => Base -> bin -> bout
-convertToBase Base16 b =
-    B.unsafeCreate (B.length b * 2) $ \bout ->
-    B.withByteArray b               $ \bin  ->
-        toHexadecimal bout bin (B.length b)
-convertToBase Base32 b =
-    B.unsafeCreate  outLen $ \bout ->
-    B.withByteArray b      $ \bin  ->
-        toBase32 bout bin (B.length b)
-  where (q,r)  = B.length b `divMod` 5
-        outLen = 8 * (if r == 0 then q else q + 1)
-convertToBase Base64 b =
-    B.unsafeCreate outLen $ \bout ->
-    withByteArray b       $ \bin  ->
-        toBase64 bout bin (B.length b)
-  where (q,r)  = B.length b `divMod` 3
-        outLen = 4 * (if r == 0 then q else q+1)
-convertToBase Base64URL b =
-    B.unsafeCreate outLen $ \bout ->
-    withByteArray b       $ \bin  ->
-        toBase64URL bout bin (B.length b)
-  where (q,r)  = B.length b `divMod` 3
-        outLen = 4 * q + (if r == 0 then 0 else r+1)
+convertToBase base b = case base of
+    Base16 -> doConvert (binLength * 2) toHexadecimal
+    Base32 -> let (q,r)  = binLength `divMod` 5
+                  outLen = 8 * (if r == 0 then q else q + 1)
+               in doConvert outLen toBase32
+    Base64 -> doConvert base64Length toBase64
+    -- Base64URL         -> doConvert base64Length (toBase64URL True)
+    Base64URLUnpadded -> doConvert base64UnpaddedLength (toBase64URL False)
+  where
+    binLength = B.length b
+
+    base64Length = let (q,r) = binLength `divMod` 3
+                    in 4 * (if r == 0 then q else q+1)
+
+    base64UnpaddedLength = let (q,r) = binLength `divMod` 3
+                            in 4 * q + (if r == 0 then 0 else r+1)
+    doConvert l f =
+        B.unsafeCreate l $ \bout ->
+        B.withByteArray b     $ \bin  ->
+            f bout bin binLength
 
 -- | Try to Convert a bytearray from the equivalent representation in a specific Base
 convertFromBase :: (ByteArrayAccess bin, ByteArray bout) => Base -> bin -> Either String bout
@@ -85,12 +89,13 @@ convertFromBase Base64 b = unsafeDoIO $
                 case ret of
                     Nothing  -> return $ Right out
                     Just ofs -> return $ Left ("base64: input: invalid encoding at offset: " ++ show ofs)
-convertFromBase Base64URL b = unsafeDoIO $
+convertFromBase Base64URLUnpadded b = unsafeDoIO $
     withByteArray b $ \bin ->
-        case unBase64URLLength (B.length b) of
-            Nothing     -> return $ Left "base64URL: input: invalid length"
+        case unBase64LengthUnpadded (B.length b) of
+            Nothing     -> return $ Left "base64URL unpadded: input: invalid length"
             Just dstLen -> do
-                (ret, out) <- B.allocRet dstLen $ \bout -> fromBase64URL bout bin (B.length b)
+                (ret, out) <- B.allocRet dstLen $ \bout -> fromBase64URLUnpadded bout bin (B.length b)
                 case ret of
                     Nothing  -> return $ Right out
-                    Just ofs -> return $ Left ("base64URL: input: invalid encoding at offset: " ++ show ofs)
+                    Just ofs -> return $ Left ("base64URL unpadded: input: invalid encoding at offset: " ++ show ofs)
+
