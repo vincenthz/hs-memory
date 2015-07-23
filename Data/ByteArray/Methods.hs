@@ -15,6 +15,9 @@ module Data.ByteArray.Methods
     , unpack
     , uncons
     , empty
+    , singleton
+    , cons
+    , snoc
     , null
     , replicate
     , zero
@@ -30,6 +33,8 @@ module Data.ByteArray.Methods
     , index
     , eq
     , constEq
+    , any
+    , all
     , append
     , concat
     ) where
@@ -42,7 +47,7 @@ import           Data.Monoid
 import           Foreign.Storable
 import           Foreign.Ptr
 
-import           Prelude hiding (length, take, drop, span, concat, replicate, splitAt, null, pred)
+import           Prelude hiding (length, take, drop, span, concat, replicate, splitAt, null, pred, last, any, all)
 import qualified Prelude
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
@@ -70,7 +75,7 @@ empty :: ByteArray a => a
 empty = unsafeDoIO (alloc 0 $ \_ -> return ())
 
 -- | Check if a byte array is empty
-null :: ByteArray a => a -> Bool
+null :: ByteArrayAccess a => a -> Bool
 null b = length b == 0
 
 -- | Pack a list of bytes into a bytearray
@@ -94,6 +99,24 @@ uncons :: ByteArray a => a -> Maybe (Word8, a)
 uncons a
     | null a    = Nothing
     | otherwise = Just (index a 0, drop 1 a)
+
+-- | Create a byte array from a single byte
+singleton :: ByteArray a => Word8 -> a
+singleton b = unsafeCreate 1 (\p -> pokeByteOff p 0 b)
+
+-- | prepend a single byte to a byte array
+cons :: ByteArray a => Word8 -> a -> a
+cons b ba = unsafeCreate (len + 1) $ \d -> withByteArray ba $ \s -> do
+    pokeByteOff d 0 b
+    memCopy (d `plusPtr` 1) s len
+  where len = length ba
+
+-- | append a single byte to a byte array
+snoc :: ByteArray a =>  a -> Word8 -> a
+snoc ba b = unsafeCreate (len + 1) $ \d -> withByteArray ba $ \s -> do
+    memCopy d s len
+    pokeByteOff d len b
+  where len = length ba
 
 -- | Create a xor of bytes between a and b.
 --
@@ -127,7 +150,7 @@ splitAt n bs
             return (b1, b2)
   where len = length bs
 
--- | Take the first @n byte of a bytearray
+-- | Take the first @n@ byte of a bytearray
 take :: ByteArray bs => Int -> bs -> bs
 take n bs
     | n <= 0    = empty
@@ -136,7 +159,7 @@ take n bs
     m   = min len n
     len = length bs
 
--- | drop the first @n byte of a bytearray
+-- | drop the first @n@ byte of a bytearray
 drop :: ByteArray bs => Int -> bs -> bs
 drop n bs
     | n <= 0    = bs
@@ -147,7 +170,7 @@ drop n bs
     nb  = len - ofs
     len = length bs
 
--- | Split a bytearray at the point where @pred becomes invalid
+-- | Split a bytearray at the point where @pred@ becomes invalid
 span :: ByteArray bs => (Word8 -> Bool) -> bs -> (bs, bs)
 span pred bs
     | null bs   = (bs, bs)
@@ -237,6 +260,23 @@ constEq b1 b2
   where
     l1 = length b1
     l2 = length b2
+
+-- | Check if any element of a byte array satisfies a predicate
+any :: (ByteArrayAccess ba) => (Word8 -> Bool) -> ba -> Bool
+any f b
+    | null b    = False
+    | otherwise = unsafeDoIO $ withByteArray b $ \p -> loop p 0
+  where
+    len = length b
+    loop p i
+        | i == len  = return False
+        | otherwise = do
+            w <- peekByteOff p i
+            if f w then return True else loop p (i+1)
+
+-- | Check if all elements of a byte array satisfy a predicate
+all :: (ByteArrayAccess ba) => (Word8 -> Bool) -> ba -> Bool
+all f b = not (any (not . f) b)
 
 -- | Convert a bytearray to another type of bytearray
 convert :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout

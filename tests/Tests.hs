@@ -171,4 +171,19 @@ main = defaultMain $ testGroup "memory"
             let chunks   = map (witnessID . B.pack . unWords8) l
                 expected = concatMap unWords8 l
              in B.pack expected == witnessID (B.concat chunks)
+        , testProperty "cons b bs == reverse (snoc (reverse bs) b)" $ \(Words8 l) b ->
+            let b1 = witnessID (B.pack l)
+                b2 = witnessID (B.pack (reverse l))
+                expected = B.pack (reverse (B.unpack (B.snoc b2 b)))
+             in B.cons b b1 == expected
+        , testProperty "all == Prelude.all" $ \(Words8 l) b ->
+            let b1 = witnessID (B.pack l)
+                p  = (/= b)
+             in B.all p b1 == all p l
+        , testProperty "any == Prelude.any" $ \(Words8 l) b ->
+            let b1 = witnessID (B.pack l)
+                p  = (== b)
+             in B.any p b1 == any p l
+        , testProperty "singleton b == pack [b]" $ \b ->
+            witnessID (B.singleton b) == B.pack [b]
         ]
