@@ -15,10 +15,12 @@
 module Data.Memory.Encoding.Base64
     ( toBase64
     , toBase64URL
+    , toBase64OpenBSD
     , unBase64Length
     , unBase64LengthUnpadded
     , fromBase64
     , fromBase64URLUnpadded
+    , fromBase64OpenBSD
     ) where
 
 import           Control.Monad
@@ -50,6 +52,11 @@ toBase64URL :: Bool -> Ptr Word8 -> Ptr Word8 -> Int -> IO ()
 toBase64URL padded dst src len = toBase64Internal set dst src len padded
   where
         !set = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"#
+
+toBase64OpenBSD :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
+toBase64OpenBSD dst src len = toBase64Internal set dst src len False
+  where
+        !set = "./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"#
 
 toBase64Internal :: Addr# -> Ptr Word8 -> Ptr Word8 -> Int -> Bool -> IO ()
 toBase64Internal table dst src len padded = loop 0 0
@@ -122,6 +129,8 @@ unBase64LengthUnpadded len = case r of
     _ -> Nothing
   where (q, r) = len `divMod` 4
 
+fromBase64OpenBSD :: Ptr Word8 -> Ptr Word8 -> Int -> IO (Maybe Int)
+fromBase64OpenBSD dst src len = fromBase64Unpadded rsetOpenBSD dst src len
 
 fromBase64URLUnpadded :: Ptr Word8 -> Ptr Word8 -> Int -> IO (Maybe Int)
 fromBase64URLUnpadded dst src len = fromBase64Unpadded rsetURL dst src len
@@ -201,7 +210,6 @@ rsetURL :: Word8 -> Word8
 rsetURL (W8# w)
     | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
     | otherwise                        = 0xff
-
   where !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x3e\xff\xff\
@@ -218,6 +226,28 @@ rsetURL (W8# w)
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"#
+
+rsetOpenBSD :: Word8 -> Word8
+rsetOpenBSD (W8# w)
+    | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
+    | otherwise                        = 0xff
+  where !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x01\
+                     \\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f\xff\xff\xff\xff\xff\xff\
+                     \\xff\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\
+                     \\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\xff\xff\xff\xff\xff\
+                     \\xff\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\
+                     \\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+                     \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"#
+
 
 -- | convert from base64 in @src@ to binary in @dst@, using the number of bytes specified
 --

@@ -32,6 +32,7 @@ data Base = Base16            -- ^ similar to hexadecimal
           | Base32
           | Base64            -- ^ standard Base64
           | Base64URLUnpadded -- ^ unpadded URL-safe Base64
+          | Base64OpenBSD     -- ^ Base64 as used in OpenBSD password encoding (such as bcrypt)
           deriving (Show,Eq)
 
 -- | Convert a bytearray to the equivalent representation in a specific Base
@@ -44,6 +45,7 @@ convertToBase base b = case base of
     Base64 -> doConvert base64Length toBase64
     -- Base64URL         -> doConvert base64Length (toBase64URL True)
     Base64URLUnpadded -> doConvert base64UnpaddedLength (toBase64URL False)
+    Base64OpenBSD     -> doConvert base64UnpaddedLength toBase64OpenBSD
   where
     binLength = B.length b
 
@@ -98,4 +100,13 @@ convertFromBase Base64URLUnpadded b = unsafeDoIO $
                 case ret of
                     Nothing  -> return $ Right out
                     Just ofs -> return $ Left ("base64URL unpadded: input: invalid encoding at offset: " ++ show ofs)
+convertFromBase Base64OpenBSD b = unsafeDoIO $
+    withByteArray b $ \bin ->
+        case unBase64LengthUnpadded (B.length b) of
+            Nothing     -> return $ Left "base64 unpadded: input: invalid length"
+            Just dstLen -> do
+                (ret, out) <- B.allocRet dstLen $ \bout -> fromBase64OpenBSD bout bin (B.length b)
+                case ret of
+                    Nothing  -> return $ Right out
+                    Just ofs -> return $ Left ("base64 unpadded: input: invalid encoding at offset: " ++ show ofs)
 
