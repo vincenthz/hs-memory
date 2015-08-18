@@ -1,5 +1,6 @@
 ## 0.8
 
+* Add Base64 variants (Luke Taylor)
 * Fix compilation on Haiku (Jessica Hamilton)
 
 ## 0.7
