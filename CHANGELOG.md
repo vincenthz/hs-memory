@@ -1,3 +1,7 @@
+## 0.9
+
+* memConstEqual was comparing length times the first byte instead of comparing all the bytes one to one
+
 ## 0.8
 
 * Add Base64 variants (Luke Taylor)

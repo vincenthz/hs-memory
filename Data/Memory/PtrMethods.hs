@@ -95,7 +95,7 @@ memConstEqual p1 p2 n = loop 0 True
     loop i !ret
         | i == n    = return ret
         | otherwise = do
-            e <- (==) <$> peek p1 <*> peek p2
+            e <- (==) <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
             loop (i+1) (ret &&! e)
 
     -- Bool == Bool
