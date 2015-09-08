@@ -27,7 +27,7 @@ import           Foreign.Ptr              (Ptr, plusPtr)
 import           Foreign.Storable         (peek, poke, pokeByteOff, peekByteOff)
 import           Foreign.C.Types
 import           Foreign.Marshal.Alloc    (allocaBytesAligned)
-import           Data.Bits                (xor)
+import           Data.Bits                ((.|.), xor)
 
 -- | Create a new temporary buffer
 memCreateTemporary :: Int -> (Ptr Word8 -> IO a) -> IO a
@@ -90,20 +90,13 @@ memCompare p1 p2 n = loop 0
 -- over all the bytes present before yielding a result even when
 -- knowing the overall result early in the processing.
 memConstEqual :: Ptr Word8 -> Ptr Word8 -> Int -> IO Bool
-memConstEqual p1 p2 n = loop 0 True
+memConstEqual p1 p2 n = loop 0 0
   where
-    loop i !ret
-        | i == n    = return ret
+    loop i !acc
+        | i == n    = return $! acc == 0
         | otherwise = do
-            e <- (==) <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
-            loop (i+1) (ret &&! e)
-
-    -- Bool == Bool
-    (&&!) :: Bool -> Bool -> Bool
-    True  &&! True  = True
-    True  &&! False = False
-    False &&! True  = False
-    False &&! False = False
+            e <- xor <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
+            loop (i+1) (acc .|. e)
 
 foreign import ccall unsafe "memset"
     c_memset :: Ptr Word8 -> Word8 -> CSize -> IO ()
