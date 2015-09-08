@@ -1,3 +1,7 @@
+## 0.10
+
+* make memConstEqual more constant not using boolean comparaison
+
 ## 0.9
 
 * memConstEqual was comparing length times the first byte instead of comparing all the bytes one to one
