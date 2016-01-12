@@ -1,12 +1,12 @@
 sudo: false
 
 env:
- - CABALVER=1.16 GHCVER=7.0.4
- - CABALVER=1.16 GHCVER=7.4.2
- - CABALVER=1.18 GHCVER=7.6.3
- - CABALVER=1.18 GHCVER=7.8.4
- - CABALVER=1.22 GHCVER=7.10.1
- - CABALVER=head GHCVER=head
+ - CABALVER=1.16 GHCVER=7.0.4 RUNTEST=0
+ - CABALVER=1.16 GHCVER=7.4.2 RUNTEST=1
+ - CABALVER=1.18 GHCVER=7.6.3 RUNTEST=1
+ - CABALVER=1.18 GHCVER=7.8.4 RUNTEST=1
+ - CABALVER=1.22 GHCVER=7.10.1 RUNTEST=1
+ - CABALVER=head GHCVER=head RUNTEST=0
 
 matrix:
   allow_failures:
@@ -26,7 +26,7 @@ addons:
          - ghc-7.4.2
          - ghc-7.6.3
          - ghc-7.8.4
-         - ghc-7.10.1
+         - ghc-7.10.3
          - ghc-head
 
 before_install:
@@ -36,12 +36,12 @@ install:
  - cabal --version
  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
  - travis_retry cabal update
- - if [ "${GHCVER}" = "7.0.4" ]; then cabal install --only-dependencies; else cabal install --only-dependencies --enable-tests; fi
+ - if [ "${RUNTEST}" = "0" ]; then cabal install --only-dependencies; else cabal install --only-dependencies --enable-tests; fi
 
 script:
- - if [ "${GHCVER}" != "7.0.4" ]; then cabal configure --enable-tests -v2; else cabal configure -v2; fi
+ - if [ "${RUNTEST}" != "0" ]; then cabal configure --enable-tests -v2; else cabal configure -v2; fi
  - cabal build
- - if [ "${GHCVER}" != "7.0.4" ]; then cabal test; fi;
+ - if [ "${RUNTEST}" != "0" ]; then cabal test; fi;
  - cabal check
  - cabal sdist
  - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
