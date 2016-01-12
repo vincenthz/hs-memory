@@ -66,13 +66,18 @@ newScrubbedBytes (I# sz)
             (# s1, mbarr #) ->
                 let !scrubber = getScrubber sz
                     !mba      = ScrubbedBytes mbarr
-                 in case mkWeak# mbarr () (scrubber (byteArrayContents# (unsafeCoerce# mbarr)) >> doTouch mba) s1 of
+                 in case mkWeak# mbarr () (finalize scrubber mba) s1 of
                     (# s2, _ #) -> (# s2, mba #)
   where
 #if __GLASGOW_HASKELL__ >= 800
-    doTouch (ScrubbedBytes mba) = \s -> case touch# mba s of (# s', _ #) -> s'
+    finalize scrubber mba@(ScrubbedBytes mbarr) = \s ->
+        case scrubber (byteArrayContents# (unsafeCoerce# mbarr)) s of
+            s' -> touch# mba s'
 #else
-    doTouch (ScrubbedBytes mba) = IO $ \s -> case touch# mba s of s' -> (# s', () #)
+    finalize scrubber mba@(ScrubbedBytes mbarr) = IO $ \s1 -> do
+        case scrubber (byteArrayContents# (unsafeCoerce# mbarr)) s1 of
+            s2 -> case touch# mba s2 of
+                    s3 -> (# s3, () #)
 #endif
 
 scrubbedBytesAllocRet :: Int -> (Ptr p -> IO a) -> IO (a, ScrubbedBytes)
