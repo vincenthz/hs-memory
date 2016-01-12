@@ -75,10 +75,10 @@ eitherDivideBy8# :: Int#        -- ^ number of bytes
                  -> (Int# -> a) -- ^ if it divided by 8, the argument is the number of 8 bytes words
                  -> (Int# -> a) -- ^ if it doesn't, just the number of bytes
                  -> a
-#if __GLASGOW_HASKELL__ >= 740
+#if __GLASGOW_HASKELL__ >= 704
 eitherDivideBy8# v f8 f1 =
-    let !(# q, r #) = quotRemInt v 8#
-     in if booleanPrim (r ==# 0)
+    let !(# q, r #) = quotRemInt# v 8#
+     in if booleanPrim (r ==# 0#)
             then f8 q
             else f1 v
 #else
