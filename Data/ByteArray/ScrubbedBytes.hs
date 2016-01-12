@@ -64,18 +64,20 @@ newScrubbedBytes (I# sz)
     | otherwise               = IO $ \s ->
         case newAlignedPinnedByteArray# sz 8# s of
             (# s1, mbarr #) ->
-                let !scrubber = getScrubber sz
+                let !scrubber = (getScrubber sz) (byteArrayContents# (unsafeCoerce# mbarr))
                     !mba      = ScrubbedBytes mbarr
                  in case mkWeak# mbarr () (finalize scrubber mba) s1 of
                     (# s2, _ #) -> (# s2, mba #)
   where
 #if __GLASGOW_HASKELL__ >= 800
-    finalize scrubber mba@(ScrubbedBytes mbarr) = \s ->
-        case scrubber (byteArrayContents# (unsafeCoerce# mbarr)) s of
-            s' -> touch# mba s'
+    finalize :: (State# RealWorld -> State# RealWorld) -> ScrubbedBytes -> State# RealWorld -> State# RealWorld
+    finalize scrubber mba@(ScrubbedBytes _) = \s1 ->
+        case scrubber s1 of
+            s2 -> touch# mba s2
 #else
-    finalize scrubber mba@(ScrubbedBytes mbarr) = IO $ \s1 -> do
-        case scrubber (byteArrayContents# (unsafeCoerce# mbarr)) s1 of
+    finalize :: (State# RealWorld -> State# RealWorld) -> ScrubbedBytes -> IO ()
+    finalize scrubber mba@(ScrubbedBytes _) = IO $ \s1 -> do
+        case scrubber s1 of
             s2 -> case touch# mba s2 of
                     s3 -> (# s3, () #)
 #endif
