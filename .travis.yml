@@ -11,7 +11,7 @@ env:
 
 matrix:
   allow_failures:
-   - env: CABALVER=head GHCVER=head
+   - env: CABALVER=head GHCVER=head RUNTEST=0
 
 addons:
     apt:
