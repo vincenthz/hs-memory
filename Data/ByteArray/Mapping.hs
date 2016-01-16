@@ -8,10 +8,12 @@
 module Data.ByteArray.Mapping
     ( toW64BE
     , toW64LE
+    , fromW64BE
     , mapAsWord64
     , mapAsWord128
     ) where
 
+import           Data.Bits (shiftR)
 import           Data.ByteArray.Types
 import           Data.ByteArray.Methods
 import           Data.Memory.Internal.Compat
@@ -37,8 +39,21 @@ toW64BE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
 toW64LE :: ByteArrayAccess bs => bs -> Int -> LE Word64
 toW64LE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
 
+-- | Serialize a @Word64@ to a @ByteArray@ in big endian format
+fromW64BE :: (ByteArray ba) => Word64 -> ba
+fromW64BE n = allocAndFreeze 8 $ \p -> do
+    pokeByteOff p 0 (fromIntegral (shiftR n 56) :: Word8)
+    pokeByteOff p 1 (fromIntegral (shiftR n 48) :: Word8)
+    pokeByteOff p 2 (fromIntegral (shiftR n 40) :: Word8)
+    pokeByteOff p 3 (fromIntegral (shiftR n 32) :: Word8)
+    pokeByteOff p 4 (fromIntegral (shiftR n 24) :: Word8)
+    pokeByteOff p 5 (fromIntegral (shiftR n 16) :: Word8)
+    pokeByteOff p 6 (fromIntegral (shiftR n  8) :: Word8)
+    pokeByteOff p 7 (fromIntegral n             :: Word8)
+
+
 -- | map blocks of 128 bits of a bytearray, creating a new bytestring
--- of equivalent size where each blocks has been mapped through @f 
+-- of equivalent size where each blocks has been mapped through @f@
 --
 -- no length checking is done. unsafe
 mapAsWord128 :: ByteArray bs => (Word128 -> Word128) -> bs -> bs
@@ -59,7 +74,7 @@ mapAsWord128 f bs =
             loop (i-1) (d `plusPtr` 16) (s `plusPtr` 16)
 
 -- | map blocks of 64 bits of a bytearray, creating a new bytestring
--- of equivalent size where each blocks has been mapped through @f 
+-- of equivalent size where each blocks has been mapped through @f@
 --
 -- no length checking is done. unsafe
 mapAsWord64 :: ByteArray bs => (Word64 -> Word64) -> bs -> bs
