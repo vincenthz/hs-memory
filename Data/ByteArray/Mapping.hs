@@ -41,16 +41,7 @@ toW64LE bs ofs = unsafeDoIO $ withByteArray bs $ \p -> peek (p `plusPtr` ofs)
 
 -- | Serialize a @Word64@ to a @ByteArray@ in big endian format
 fromW64BE :: (ByteArray ba) => Word64 -> ba
-fromW64BE n = allocAndFreeze 8 $ \p -> do
-    pokeByteOff p 0 (fromIntegral (shiftR n 56) :: Word8)
-    pokeByteOff p 1 (fromIntegral (shiftR n 48) :: Word8)
-    pokeByteOff p 2 (fromIntegral (shiftR n 40) :: Word8)
-    pokeByteOff p 3 (fromIntegral (shiftR n 32) :: Word8)
-    pokeByteOff p 4 (fromIntegral (shiftR n 24) :: Word8)
-    pokeByteOff p 5 (fromIntegral (shiftR n 16) :: Word8)
-    pokeByteOff p 6 (fromIntegral (shiftR n  8) :: Word8)
-    pokeByteOff p 7 (fromIntegral n             :: Word8)
-
+fromW64BE n = allocAndFreeze 8 $ \p -> poke p (toBE n)
 
 -- | map blocks of 128 bits of a bytearray, creating a new bytestring
 -- of equivalent size where each blocks has been mapped through @f@
