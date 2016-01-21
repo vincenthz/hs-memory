@@ -1,3 +1,7 @@
+## 0.11
+
+* add support for GHC 8.0.1
+
 ## 0.10
 
 * make memConstEqual more constant not using boolean comparaison
