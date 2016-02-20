@@ -69,7 +69,7 @@ newScrubbedBytes (I# sz)
                  in case mkWeak# mbarr () (finalize scrubber mba) s1 of
                     (# s2, _ #) -> (# s2, mba #)
   where
-#if __GLASGOW_HASKELL__ > 800
+#if __GLASGOW_HASKELL__ > 801
     finalize :: (State# RealWorld -> State# RealWorld) -> ScrubbedBytes -> State# RealWorld -> State# RealWorld
     finalize scrubber mba@(ScrubbedBytes _) = \s1 ->
         case scrubber s1 of
