@@ -1,3 +1,7 @@
+## 0.12
+
+* Fix compilation with mkWeak and latest GHC (Lars Kuhtz)
+
 ## 0.11
 
 * add support for GHC 8.0.1
