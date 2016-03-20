@@ -45,7 +45,7 @@ import           Data.ByteArray.Pack.Internal
 import           Data.ByteArray (ByteArray, ByteArrayAccess, MemView(..))
 import qualified Data.ByteArray as B
 
--- | fill a given sized buffer with the result of the Packer action
+-- | Fill a given sized buffer with the result of the Packer action
 fill :: ByteArray byteArray => Int -> Packer a -> Either String byteArray
 fill len packing = unsafeDoIO $ do
     (val, out) <- B.allocRet len $ \ptr -> runPacker_ packing (MemView ptr len)
@@ -55,7 +55,7 @@ fill len packing = unsafeDoIO $ do
             | otherwise -> return $ Left ("remaining unpacked bytes " ++ show r ++ " at the end of buffer")
         PackerFail err  -> return $ Left err
 
--- | pack the given packer into the given bytestring
+-- | Pack the given packer into the given bytestring
 pack :: ByteArray byteArray => Packer a -> Int -> Either String byteArray
 pack packing len = fill len packing
 {-# DEPRECATED pack "use fill instead" #-}
@@ -65,11 +65,11 @@ fillUpWithWord8' w = Packer $ \(MemView ptr size) -> do
     memSet ptr w size
     return $ PackerMore () (MemView (ptr `plusPtr` size) 0)
 
--- | put a storable from the current position in the stream
+-- | Put a storable from the current position in the stream
 putStorable :: Storable storable => storable -> Packer ()
 putStorable s = actionPacker (sizeOf s) (\ptr -> poke (castPtr ptr) s)
 
--- | put a Byte Array from the current position in the stream
+-- | Put a Byte Array from the current position in the stream
 --
 -- If the ByteArray is null, then do nothing
 putBytes :: ByteArrayAccess ba => ba -> Packer ()
@@ -81,18 +81,20 @@ putBytes bs
   where
     neededLength = B.length bs
 
--- | skip some bytes from the current position in the stream
+-- | Skip some bytes from the current position in the stream
 skip :: Int -> Packer ()
 skip n = actionPacker n (\_ -> return ())
 
--- | skip the size of a storable from the current position in the stream
+-- | Skip the size of a storable from the current position in the stream
 skipStorable :: Storable storable => storable -> Packer ()
 skipStorable = skip . sizeOf
 
--- | fill up from the current position in the stream to the end
+-- | Fill up from the current position in the stream to the end
 --
--- it is basically:
+-- It is equivalent to:
+--
 -- > fillUpWith s == fillList (repeat s)
+--
 fillUpWith :: Storable storable => storable -> Packer ()
 fillUpWith s = fillList $ repeat s
 {-# RULES "fillUpWithWord8" forall s . fillUpWith s = fillUpWithWord8' s #-}
@@ -104,12 +106,19 @@ fillUpWith s = fillList $ repeat s
 -- This function will fail with not enough storage if the given storable can't
 -- be written (not enough space)
 --
--- example:
--- > pack (fillList $ [1..] :: Word8) 9    ==> "\1\2\3\4\5\6\7\8\9"
--- > pack (fillList $ [1..] :: Word32) 4   ==> "\1\0\0\0"
--- > pack (fillList $ [1..] :: Word32) 64  -- will work
--- > pack (fillList $ [1..] :: Word32) 1   -- will fail (not enough space)
--- > pack (fillList $ [1..] :: Word32) 131 -- will fail (not enough space)
+-- Example:
+--
+-- > > pack (fillList $ [1..] :: Word8) 9
+-- > "\1\2\3\4\5\6\7\8\9"
+-- > > pack (fillList $ [1..] :: Word32) 4
+-- > "\1\0\0\0"
+-- > > pack (fillList $ [1..] :: Word32) 64
+-- > .. <..succesful..>
+-- > > pack (fillList $ [1..] :: Word32) 1
+-- > .. <.. not enough space ..>
+-- > > pack (fillList $ [1..] :: Word32) 131
+-- > .. <.. not enough space ..>
+--
 fillList :: Storable storable => [storable] -> Packer ()
 fillList []     = return ()
 fillList (x:xs) = putStorable x >> fillList xs
