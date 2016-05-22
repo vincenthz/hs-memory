@@ -88,7 +88,7 @@ Library
     Build-depends:   bytestring
   if flag(support_deepseq)
     CPP-options:     -DWITH_DEEPSEQ_SUPPORT
-    Build-depends:   deepseq
+    Build-depends:   deepseq >= 1.1
 
   ghc-options:       -Wall -fwarn-tabs
   default-language:  Haskell2010
