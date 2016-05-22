@@ -174,7 +174,7 @@ byte w = Parser $ \buf err ok ->
     case B.uncons buf of
         Nothing      -> runParser (getMore >> byte w) buf err ok
         Just (c1,b2) | c1 == w   -> ok b2 ()
-                     | otherwise -> err buf ("byte " ++ show w ++ " : failed")
+                     | otherwise -> err buf ("byte " ++ show w ++ " : failed : got " ++ show c1)
 
 -- | Parse a sequence of bytes from current position
 --
