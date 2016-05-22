@@ -22,6 +22,7 @@ module Data.ByteArray.Parse
     , parse
     , parseFeed
     -- * Parser methods
+    , hasMore
     , byte
     , anyByte
     , bytes
@@ -55,7 +56,7 @@ import           Prelude hiding (take, takeWhile)
 -- * success: the remaining unparsed data and the parser value
 data Result byteArray a =
       ParseFail String
-    | ParseMore (byteArray -> Result byteArray a)
+    | ParseMore (Maybe byteArray -> Result byteArray a)
     | ParseOK   byteArray a
 
 instance (Show ba, Show a) => Show (Result ba a) where
@@ -63,31 +64,37 @@ instance (Show ba, Show a) => Show (Result ba a) where
     show (ParseMore _)   = "ParseMore _"
     show (ParseOK b a)   = "ParseOK " ++ show a ++ " " ++ show b
 
+-- | The continuation of the current buffer, and the error string
 type Failure byteArray r = byteArray -> String -> Result byteArray r
+
+-- | The continuation of the next buffer value, and the parsed value
 type Success byteArray a r = byteArray -> a -> Result byteArray r
 
 -- | Simple ByteString parser structure
 newtype Parser byteArray a = Parser
-    { runParser :: forall r . byteArray -> Failure byteArray r -> Success byteArray a r -> Result byteArray r }
+    { runParser :: forall r . byteArray
+                           -> Failure byteArray r
+                           -> Success byteArray a r
+                           -> Result byteArray r }
 
-instance Monad (Parser byteArray) where
-    fail errorMsg = Parser $ \buf err _ -> err buf ("failed: " ++ errorMsg)
-    return v = Parser $ \buf _ ok -> ok buf v
-    m >>= k = Parser $ \buf err ok ->
-         runParser m buf err (\buf' a -> runParser (k a) buf' err ok)
-instance MonadPlus (Parser byteArray) where
-    mzero = fail "Parser.MonadPlus.mzero"
-    mplus f g = Parser $ \buf err ok ->
-        -- rewrite the err callback of @f to call @g
-        runParser f buf (\_ _ -> runParser g buf err ok) ok
 instance Functor (Parser byteArray) where
     fmap f p = Parser $ \buf err ok ->
         runParser p buf err (\b a -> ok b (f a))
 instance Applicative (Parser byteArray) where
     pure      = return
     (<*>) d e = d >>= \b -> e >>= \a -> return (b a)
+instance Monad (Parser byteArray) where
+    fail errorMsg = Parser $ \buf err _ -> err buf ("Parser failed: " ++ errorMsg)
+    return v      = Parser $ \buf _ ok -> ok buf v
+    m >>= k       = Parser $ \buf err ok ->
+         runParser m buf err (\buf' a -> runParser (k a) buf' err ok)
+instance MonadPlus (Parser byteArray) where
+    mzero = fail "MonadPlus.mzero"
+    mplus f g = Parser $ \buf err ok ->
+        -- rewrite the err callback of @f to call @g
+        runParser f buf (\_ _ -> runParser g buf err ok) ok
 instance Alternative (Parser byteArray) where
-    empty = fail "Parser.Alternative.empty"
+    empty = fail "Alternative.empty"
     (<|>) = mplus
 
 -- | Run a parser on an @initial byteArray.
@@ -95,7 +102,10 @@ instance Alternative (Parser byteArray) where
 -- If the Parser need more data than available, the @feeder function
 -- is automatically called and fed to the More continuation.
 parseFeed :: (ByteArrayAccess byteArray, Monad m)
-          => m byteArray -> Parser byteArray a -> byteArray -> m (Result byteArray a)
+          => m (Maybe byteArray)
+          -> Parser byteArray a
+          -> byteArray
+          -> m (Result byteArray a)
 parseFeed feeder p initial = loop $ parse p initial
   where loop (ParseMore k) = feeder >>= (loop . k)
         loop r             = return r
@@ -106,25 +116,47 @@ parse :: ByteArrayAccess byteArray
 parse p s = runParser p s (\_ msg -> ParseFail msg) (\b a -> ParseOK b a)
 
 ------------------------------------------------------------
+
+-- When needing more data, getMore append the next data
+-- to the current buffer. if no further data, then
+-- the err callback is called.
 getMore :: ByteArray byteArray => Parser byteArray ()
 getMore = Parser $ \buf err ok -> ParseMore $ \nextChunk ->
-    if B.null nextChunk
-        then err buf "EOL: need more data"
-        else ok (B.append buf nextChunk) ()
+    case nextChunk of
+        Nothing -> err buf "EOL: need more data"
+        Just nc
+            | B.null nc -> runParser getMore buf err ok
+            | otherwise -> ok (B.append buf nc) ()
 
+-- Only used by takeAll, which accumulate all the remaining data
+-- until ParseMore is fed a Nothing value.
+--
+-- getAll cannot fail.
 getAll :: ByteArray byteArray => Parser byteArray ()
 getAll = Parser $ \buf err ok -> ParseMore $ \nextChunk ->
-    if B.null nextChunk
-        then ok buf ()
-        else runParser getAll (B.append buf nextChunk) err ok
+    case nextChunk of
+        Nothing -> ok buf ()
+        Just nc -> runParser getAll (B.append buf nc) err ok
 
+-- Only used by skipAll, which flush all the remaining data
+-- until ParseMore is fed a Nothing value.
+--
+-- flushAll cannot fail.
 flushAll :: ByteArray byteArray => Parser byteArray ()
 flushAll = Parser $ \buf err ok -> ParseMore $ \nextChunk ->
-    if B.null nextChunk
-        then ok buf ()
-        else runParser getAll B.empty err ok
+    case nextChunk of
+        Nothing -> ok buf ()
+        Just _  -> runParser flushAll B.empty err ok
 
 ------------------------------------------------------------
+hasMore :: ByteArray byteArray => Parser byteArray Bool
+hasMore = Parser $ \buf err ok ->
+    if B.null buf
+        then ParseMore $ \nextChunk ->
+                case nextChunk of
+                    Nothing -> ok buf False
+                    Just nc -> runParser hasMore nc err ok
+        else ok buf True
 
 -- | Get the next byte from the parser
 anyByte :: ByteArray byteArray => Parser byteArray Word8
