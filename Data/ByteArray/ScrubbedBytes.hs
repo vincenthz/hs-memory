@@ -17,12 +17,14 @@ import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
 import           Data.Monoid
+import           Data.String (IsString(..))
 import           Data.Memory.PtrMethods          (memCopy, memConstEqual)
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
 import           Data.Memory.Internal.Imports
 import           Data.Memory.Internal.Scrubber   (getScrubber)
 import           Data.ByteArray.Types
+import           Foreign.Storable
 
 -- | ScrubbedBytes is a memory chunk which have the properties of:
 --
@@ -47,6 +49,8 @@ instance Monoid ScrubbedBytes where
     mconcat       = unsafeDoIO . scrubbedBytesConcat
 instance NFData ScrubbedBytes where
     rnf b = b `seq` ()
+instance IsString ScrubbedBytes where
+    fromString = scrubbedFromChar8
 
 instance ByteArrayAccess ScrubbedBytes where
     length        = sizeofScrubbedBytes
@@ -163,3 +167,11 @@ scrubbedBytesCompare b1@(ScrubbedBytes m1) b2@(ScrubbedBytes m2) = unsafeDoIO $ 
                             then loop (i +# 1#) s3
                             else if booleanPrim (ltWord# e1 e2) then (# s3, LT #)
                                                                 else (# s3, GT #)
+
+scrubbedFromChar8 :: [Char] -> ScrubbedBytes
+scrubbedFromChar8 l = unsafeDoIO $ scrubbedBytesAlloc len (fill l)
+  where
+    len = Prelude.length l
+    fill :: [Char] -> Ptr Word8 -> IO ()
+    fill []     _  = return ()
+    fill (x:xs) !p = poke p (fromIntegral $ fromEnum x) >> fill xs (p `plusPtr` 1)
