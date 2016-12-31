@@ -4,6 +4,7 @@ module Main where
 
 import           Imports
 import           Utils
+import           Data.Char                    (chr)
 import           Data.Word
 import           Data.ByteArray               (Bytes, ScrubbedBytes, ByteArray)
 import qualified Data.ByteArray          as B
@@ -51,6 +52,19 @@ testGroupBackends x l =
         [ testGroup "Bytes" (l withBytesWitness)
         , testGroup "ScrubbedBytes" (l withScrubbedBytesWitness)
         ]
+
+testShowProperty :: Testable a
+                 => String
+                 -> (forall ba . (Show ba, Eq ba, ByteArray ba) => (ba -> ba) -> ([Word8] -> String) -> a)
+                 -> TestTree
+testShowProperty x p =
+    testGroup x
+        [ testProperty "Bytes" (p withBytesWitness showLikeString)
+        , testProperty "ScrubbedBytes" (p withScrubbedBytesWitness showLikeEmptySB)
+        ]
+  where
+    showLikeString  l = show $ map (chr . fromIntegral) l
+    showLikeEmptySB _ = show (withScrubbedBytesWitness B.empty)
 
 base64Kats =
     [ ("pleasure.", "cGxlYXN1cmUu")
@@ -145,6 +159,8 @@ main = defaultMain $ testGroup "memory"
     , testGroupBackends "hashing" $ \witnessID ->
         [ testGroup "SipHash" $ SipHash.tests witnessID
         ]
+    , testShowProperty "showing" $ \witnessID expectedShow (Words8 l) ->
+          (show . witnessID . B.pack $ l) == expectedShow l
     ]
   where
     basicProperties witnessID =
