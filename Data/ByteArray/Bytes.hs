@@ -154,7 +154,7 @@ bytesUnpackChars (Bytes mba) xs = chunkLoop 0#
     chunkLoop idx
         | booleanPrim (len ==# idx) = []
         | booleanPrim ((len -# idx) ># 63#) =
-            bytesLoop idx (idx +# 64#) (chunkLoop (idx +# 64#))
+            bytesLoop idx 64# (chunkLoop (idx +# 64#))
         | otherwise =
             bytesLoop idx (len -# idx) xs
 
