@@ -1,3 +1,12 @@
+## 0.14
+
+* Improve fromW64BE
+* Add IsString instance for ScrubbedBytes
+
+## 0.13
+
+* Add combinator to check for end of parsing.
+
 ## 0.12
 
 * Fix compilation with mkWeak and latest GHC (Lars Kuhtz)
