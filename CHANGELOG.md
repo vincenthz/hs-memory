@@ -1,3 +1,7 @@
+## 0.14.1
+
+* Fix `Show` instance of Bytes (Oliver Chéron)
+
 ## 0.14
 
 * Improve fromW64BE
