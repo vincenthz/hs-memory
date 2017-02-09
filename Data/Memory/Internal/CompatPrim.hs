@@ -69,6 +69,7 @@ booleanPrim v = tagToEnum# v
 booleanPrim :: Bool -> Bool
 booleanPrim b = b
 #endif
+{-# INLINE booleanPrim #-}
 
 -- | Apply or or another function if 8 divides the number of bytes
 eitherDivideBy8# :: Int#        -- ^ number of bytes

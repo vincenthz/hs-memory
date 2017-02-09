@@ -55,6 +55,7 @@ alloc :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
 alloc n f
     | n < 0     = alloc 0 f
     | otherwise = snd `fmap` allocRet n f
+{-# INLINE alloc #-}
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
 create :: ByteArray ba => Int -> (Ptr p -> IO ()) -> IO ba
@@ -70,6 +71,10 @@ unsafeCreate :: ByteArray a => Int -> (Ptr p -> IO ()) -> a
 unsafeCreate sz f = unsafeDoIO (alloc sz f)
 {-# NOINLINE unsafeCreate #-}
 
+inlineUnsafeCreate :: ByteArray a => Int -> (Ptr p -> IO ()) -> a
+inlineUnsafeCreate !sz f = unsafeDoIO (alloc sz f)
+{-# INLINE inlineUnsafeCreate #-}
+
 -- | Create an empty byte array
 empty :: ByteArray a => a
 empty = unsafeDoIO (alloc 0 $ \_ -> return ())
@@ -80,9 +85,11 @@ null b = length b == 0
 
 -- | Pack a list of bytes into a bytearray
 pack :: ByteArray a => [Word8] -> a
-pack l = unsafeCreate (Prelude.length l) (fill 0 l)
-  where fill _ []     _ = return ()
-        fill i (x:xs) p = pokeByteOff p i x >> fill (i+1) xs p
+pack l = inlineUnsafeCreate (Prelude.length l) (fill l)
+  where fill []     _  = return ()
+        fill (x:xs) !p = poke p x >> fill xs (p `plusPtr` 1)
+        {-# INLINE fill #-}
+{-# NOINLINE pack #-}
 
 -- | Un-pack a bytearray into a list of bytes
 unpack :: ByteArrayAccess a => a -> [Word8]
@@ -156,8 +163,8 @@ take n bs
     | n <= 0    = empty
     | otherwise = unsafeCreate m $ \d -> withByteArray bs $ \s -> memCopy d s m
   where
-    m   = min len n
-    len = length bs
+    !m   = min len n
+    !len = length bs
 
 -- | drop the first @n@ byte of a bytearray
 drop :: ByteArray bs => Int -> bs -> bs
@@ -213,16 +220,17 @@ copyRet bs f =
 -- | Similiar to 'copy' but expect the resulting bytearray in a pure context
 copyAndFreeze :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> bs2
 copyAndFreeze bs f =
-    unsafeCreate (length bs) $ \d -> do
+    inlineUnsafeCreate (length bs) $ \d -> do
         withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
+{-# NOINLINE copyAndFreeze #-}
 
 -- | Create a bytearray of a specific size containing a repeated byte value
 replicate :: ByteArray ba => Int -> Word8 -> ba
 replicate 0 _ = empty
 replicate n b
     | n < 0     = empty
-    | otherwise = unsafeCreate n $ \ptr -> memSet ptr b n
+    | otherwise = inlineUnsafeCreate n $ \ptr -> memSet ptr b n
 {-# NOINLINE replicate #-}
 
 -- | Create a bytearray of a specific size initialized to 0
@@ -258,8 +266,8 @@ constEq b1 b2
     | l1 /= l2  = False
     | otherwise = unsafeDoIO $ withByteArray b1 $ \p1 -> withByteArray b2 $ \p2 -> memConstEqual p1 p2 l1
   where
-    l1 = length b1
-    l2 = length b2
+    !l1 = length b1
+    !l2 = length b2
 
 -- | Check if any element of a byte array satisfies a predicate
 any :: (ByteArrayAccess ba) => (Word8 -> Bool) -> ba -> Bool

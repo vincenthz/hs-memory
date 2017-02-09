@@ -59,10 +59,12 @@ memXorWith d v s n = loop 0
 -- | Copy a set number of bytes from @src to @dst
 memCopy :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
 memCopy dst src n = c_memcpy dst src (fromIntegral n)
+{-# INLINE memCopy #-}
 
 -- | Set @n number of bytes to the same value @v
 memSet :: Ptr Word8 -> Word8 -> Int -> IO ()
-memSet start v n = c_memset start (fromIntegral v) (fromIntegral n) >>= \_ -> return ()
+memSet start v n = c_memset start v (fromIntegral n) >>= \_ -> return ()
+{-# INLINE memSet #-}
 
 -- | Check if two piece of memory are equals
 memEqual :: Ptr Word8 -> Ptr Word8 -> Int -> IO Bool

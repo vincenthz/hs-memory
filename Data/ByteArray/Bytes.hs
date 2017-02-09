@@ -55,9 +55,11 @@ newBytes (I# sz)
 
 touchBytes :: Bytes -> IO ()
 touchBytes (Bytes mba) = IO $ \s -> case touch# mba s of s' -> (# s', () #)
+{-# INLINE touchBytes #-}
 
 sizeofBytes :: Bytes -> Int
 sizeofBytes (Bytes mba) = I# (sizeofMutableByteArray# mba)
+{-# INLINE sizeofBytes #-}
 
 withPtr :: Bytes -> (Ptr p -> IO a) -> IO a
 withPtr b@(Bytes mba) f = do
@@ -75,23 +77,23 @@ bytesAlloc sz f = do
 bytesConcat :: [Bytes] -> IO Bytes
 bytesConcat l = bytesAlloc retLen (copy l)
   where
-    retLen = sum $ map bytesLength l
+    !retLen = sum $ map bytesLength l
 
     copy []     _   = return ()
     copy (x:xs) dst = do
         withPtr x $ \src -> memCopy dst src chunkLen
         copy xs (dst `plusPtr` chunkLen)
       where
-        chunkLen = bytesLength x
+        !chunkLen = bytesLength x
 
 bytesAppend :: Bytes -> Bytes -> IO Bytes
 bytesAppend b1 b2 = bytesAlloc retLen $ \dst -> do
     withPtr b1 $ \s1 -> memCopy dst                  s1 len1
     withPtr b2 $ \s2 -> memCopy (dst `plusPtr` len1) s2 len2
   where
-    len1   = bytesLength b1
-    len2   = bytesLength b2
-    retLen = len1 + len2
+    !len1   = bytesLength b1
+    !len2   = bytesLength b2
+    !retLen = len1 + len2
 
 bytesAllocRet :: Int -> (Ptr p -> IO a) -> IO (a, Bytes)
 bytesAllocRet sz f = do
@@ -101,6 +103,7 @@ bytesAllocRet sz f = do
 
 bytesLength :: Bytes -> Int
 bytesLength = sizeofBytes
+{-# LANGUAGE bytesLength #-}
 
 withBytes :: Bytes -> (Ptr p -> IO a) -> IO a
 withBytes = withPtr
@@ -122,6 +125,7 @@ bytesEq b1@(Bytes m1) b2@(Bytes m2)
                         if booleanPrim (eqWord# e1 e2)
                             then loop (i +# 1#) s''
                             else (# s', False #)
+    {-# INLINE loop #-}
 
 bytesCompare :: Bytes -> Bytes -> Ordering
 bytesCompare b1@(Bytes m1) b2@(Bytes m2) = unsafeDoIO $ IO $ \s -> loop 0# s

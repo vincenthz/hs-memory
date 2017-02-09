@@ -6,6 +6,7 @@
 -- Portability : Good
 --
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE BangPatterns #-}
 module Data.ByteArray.Types
     ( ByteArrayAccess(..)
     , ByteArray(..)
@@ -34,8 +35,7 @@ class (Eq ba, Ord ba, Monoid ba, ByteArrayAccess ba) => ByteArray ba where
 #ifdef WITH_BYTESTRING_SUPPORT
 instance ByteArrayAccess B.ByteString where
     length = B.length
-    withByteArray b f = withForeignPtr fptr $ \ptr -> f (ptr `plusPtr` off)
-      where (fptr, off, _) = B.toForeignPtr b
+    withByteArray (B.PS fptr off _) f = withForeignPtr fptr $ \ptr -> f $! (ptr `plusPtr` off)
 
 instance ByteArray B.ByteString where
     allocRet sz f = do
