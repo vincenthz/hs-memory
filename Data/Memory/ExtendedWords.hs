@@ -96,7 +96,7 @@ instance Enum Word128 where
     | x /= minBound = x - 1
     | otherwise     = predError "Word128"
   toEnum x
-    | x >= 0        = fromInteger $ toInteger x -- More efficient without going through integer?
+    | x >= 0        = fromInteger $ toInteger x
     | otherwise     = toEnumError "Word128" x (minBound::Word128, maxBound::Word128)
   fromEnum x
     | x <= fromIntegral (maxBound::Int)

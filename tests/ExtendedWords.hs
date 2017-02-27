@@ -15,9 +15,6 @@ instance Arbitrary Word128 where
     return $ Word128 a1 a2
 
 
--- w128toInteger :: Word128 -> Integer
--- w128toInteger (Word128 w64p1 w61p2) = shiftL (fromIntegral w64p1) 64 + fromIntegral w61p2
-
 w128properties = testGroup "Word 128 Properties"
   [ testProperty "complement . complement = id" $ \(w128 :: Word128) -> w128 == (complement . complement $ w128)
   , testProperty "rotateR (rotateL A x) x = id" $
