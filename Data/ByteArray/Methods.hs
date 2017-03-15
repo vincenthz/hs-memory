@@ -183,8 +183,10 @@ span pred bs
     | null bs   = (bs, bs)
     | otherwise = let n = loop 0 in (take n bs, drop n bs)
   where loop !i
+            | i >= len          = len
             | pred (index bs i) = loop (i+1)
             | otherwise         = i
+        len = length bs
 
 -- | Concatenate bytearray into a larger bytearray
 concat :: (ByteArrayAccess bin, ByteArray bout) => [bin] -> bout
