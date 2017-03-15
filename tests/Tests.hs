@@ -202,4 +202,14 @@ main = defaultMain $ testGroup "memory"
              in B.any p b1 == any p l
         , testProperty "singleton b == pack [b]" $ \b ->
             witnessID (B.singleton b) == B.pack [b]
+        , testProperty "span" $ \x (Words8 l) ->
+            let c = witnessID (B.pack l)
+                (a, b) = B.span (== x) c
+             in c == B.append a b
+        , testProperty "span (const True)" $ \(Words8 l) ->
+            let a = witnessID (B.pack l)
+             in B.span (const True) a == (a, B.empty)
+        , testProperty "span (const False)" $ \(Words8 l) ->
+            let b = witnessID (B.pack l)
+             in B.span (const False) b == (B.empty, b)
         ]
