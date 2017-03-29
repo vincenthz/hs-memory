@@ -20,6 +20,11 @@ import qualified Data.ByteString as B (length)
 import qualified Data.ByteString.Internal as B
 import           Foreign.ForeignPtr (withForeignPtr)
 #endif
+#ifdef WITH_FOUNDATION_SUPPORT
+import qualified Foundation as F
+import qualified Foundation.String as F (toBytes, Encoding(UTF8))
+import qualified Foundation.Array.Internal as F
+#endif
 
 -- | Class to Access size properties and data of a ByteArray
 class ByteArrayAccess ba where
@@ -44,3 +49,15 @@ instance ByteArray B.ByteString where
         return (r, B.PS fptr 0 sz)
 #endif
 
+#ifdef WITH_FOUNDATION_SUPPORT
+uarrayRecastW8 :: F.PrimType ty => F.UArray ty -> F.UArray F.Word8
+uarrayRecastW8 = F.recast
+
+instance F.PrimType ty => ByteArrayAccess (F.UArray ty) where
+    length = F.length . uarrayRecastW8
+    withByteArray a f = F.withPtr (uarrayRecastW8 a) (f . castPtr)
+
+instance ByteArrayAccess F.String where
+    length = F.length
+    withByteArray s f = withByteArray (F.toBytes F.UTF8 s) f
+#endif
