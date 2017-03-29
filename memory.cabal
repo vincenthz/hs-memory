@@ -1,5 +1,5 @@
 Name:                memory
-Version:             0.14.2
+Version:             0.14.3
 Synopsis:            memory and related abstraction stuff
 Description:
     Chunk of memory, polymorphic byte array management and manipulation
