@@ -24,7 +24,7 @@ module Data.Memory.PtrMethods
 
 import           Data.Memory.Internal.Imports
 import           Foreign.Ptr              (Ptr, plusPtr)
-import           Foreign.Storable         (peek, poke, pokeByteOff, peekByteOff)
+import           Foreign.Storable         (peek, poke, peekByteOff)
 import           Foreign.C.Types
 import           Foreign.Marshal.Alloc    (allocaBytesAligned)
 import           Data.Bits                ((.|.), xor)
@@ -48,13 +48,19 @@ memXor d s1 s2 n = do
 --
 -- d = replicate (sizeof s) v `xor` s
 memXorWith :: Ptr Word8 -> Word8 -> Ptr Word8 -> Int -> IO ()
-memXorWith d v s n = loop 0
+memXorWith destination !v source bytes
+    | destination == source = loopInplace source bytes
+    | otherwise             = loop destination source bytes
   where
-    loop i
-        | i == n    = return ()
-        | otherwise = do
-            (xor v <$> peekByteOff s i) >>= pokeByteOff d i
-            loop (i+1)
+    loop _   _  0 = return ()
+    loop !d !s !n = do
+        peek s >>= poke s . xor v
+        loop (d `plusPtr` 1) (s `plusPtr` 1) (n-1)
+
+    loopInplace _   0 = return ()
+    loopInplace !s !n = do
+        peek s >>= poke s . xor v
+        loopInplace (s `plusPtr` 1) (n-1)
 
 -- | Copy a set number of bytes from @src to @dst
 memCopy :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
