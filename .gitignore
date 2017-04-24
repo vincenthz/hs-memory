@@ -3,4 +3,5 @@
 *.tix
 *.mix
 dist
+.stack-work
 refs/
