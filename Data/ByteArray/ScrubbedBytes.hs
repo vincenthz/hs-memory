@@ -34,7 +34,7 @@ import           Foreign.Storable
 --
 -- * A Eq instance that is constant time
 --
-data ScrubbedBytes = ScrubbedBytes (MutableByteArray# RealWorld)
+data ScrubbedBytes = ScrubbedBytes !(MutableByteArray# RealWorld)
 
 instance Show ScrubbedBytes where
     show _ = "<scrubbed-bytes>"
@@ -48,7 +48,7 @@ instance Monoid ScrubbedBytes where
     mappend b1 b2 = unsafeDoIO $ scrubbedBytesAppend b1 b2
     mconcat       = unsafeDoIO . scrubbedBytesConcat
 instance NFData ScrubbedBytes where
-    rnf b = b `seq` ()
+    rnf (ScrubbedBytes !_) = ()
 instance IsString ScrubbedBytes where
     fromString = scrubbedFromChar8
 

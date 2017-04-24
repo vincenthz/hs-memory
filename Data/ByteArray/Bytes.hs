@@ -25,7 +25,7 @@ import           Data.Memory.Internal.Compat      (unsafeDoIO)
 import           Data.ByteArray.Types
 
 -- | Simplest Byte Array
-data Bytes = Bytes (MutableByteArray# RealWorld)
+data Bytes = Bytes !(MutableByteArray# RealWorld)
 
 instance Show Bytes where
     showsPrec p b r = showsPrec p (bytesUnpackChars b []) r
@@ -38,7 +38,7 @@ instance Monoid Bytes where
     mappend b1 b2 = unsafeDoIO $ bytesAppend b1 b2
     mconcat       = unsafeDoIO . bytesConcat
 instance NFData Bytes where
-    rnf b = b `seq` ()
+    rnf (Bytes !_) = ()
 instance ByteArrayAccess Bytes where
     length        = bytesLength
     withByteArray = withBytes
