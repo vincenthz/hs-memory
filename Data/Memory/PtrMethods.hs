@@ -54,7 +54,7 @@ memXorWith destination !v source bytes
   where
     loop _   _  0 = return ()
     loop !d !s !n = do
-        peek s >>= poke s . xor v
+        peek s >>= poke d . xor v
         loop (d `plusPtr` 1) (s `plusPtr` 1) (n-1)
 
     loopInplace _   0 = return ()
