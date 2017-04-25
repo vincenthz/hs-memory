@@ -22,6 +22,7 @@ import           Foreign.ForeignPtr (withForeignPtr)
 #endif
 #ifdef WITH_FOUNDATION_SUPPORT
 import qualified Foundation as F
+import qualified Foundation.Collection as F
 import qualified Foundation.String as F (toBytes, Encoding(UTF8))
 import qualified Foundation.Array.Internal as F
 #endif
@@ -60,4 +61,11 @@ instance F.PrimType ty => ByteArrayAccess (F.UArray ty) where
 instance ByteArrayAccess F.String where
     length = F.length
     withByteArray s f = withByteArray (F.toBytes F.UTF8 s) f
+
+instance (Ord ty, F.PrimType ty) => ByteArray (F.UArray ty) where
+    allocRet sz f = do
+        mba <- F.new (F.Size sz)
+        a   <- F.withMutablePtr mba (f . castPtr)
+        ba  <- F.unsafeFreeze mba
+        return (a, ba)
 #endif
