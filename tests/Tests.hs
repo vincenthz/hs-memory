@@ -12,6 +12,7 @@ import qualified Data.ByteArray.Encoding as B
 import qualified Data.ByteArray.Parse    as Parse
 
 import qualified SipHash
+import qualified ExtendedWords
 
 data Backend = BackendByte | BackendScrubbedBytes
     deriving (Show,Eq,Bounded,Enum)
@@ -161,7 +162,7 @@ main = defaultMain $ testGroup "memory"
         ]
     , testShowProperty "showing" $ \witnessID expectedShow (Words8 l) ->
           (show . witnessID . B.pack $ l) == expectedShow l
-    ]
+    , ExtendedWords.w128properties]
   where
     basicProperties witnessID =
         [ testProperty "unpack . pack == id" $ \(Words8 l) -> l == (B.unpack . witnessID . B.pack $ l)
