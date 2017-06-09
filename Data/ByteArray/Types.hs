@@ -25,6 +25,7 @@ import qualified Foundation as F
 import qualified Foundation.Collection as F
 import qualified Foundation.String as F (toBytes, Encoding(UTF8))
 import qualified Foundation.Array.Internal as F
+import qualified Foundation.Primitive as F
 #endif
 
 -- | Class to Access size properties and data of a ByteArray
@@ -36,7 +37,12 @@ class ByteArrayAccess ba where
 
 -- | Class to allocate new ByteArray of specific size
 class (Eq ba, Ord ba, Monoid ba, ByteArrayAccess ba) => ByteArray ba where
-    allocRet  :: Int -> (Ptr p -> IO a) -> IO (a, ba)
+    -- | allocate `n` bytes and perform the given operation
+    allocRet  :: Int
+                -- ^ number of bytes to allocate. i.e. might not match the
+                -- size of the given type `ba`.
+              -> (Ptr p -> IO a)
+              -> IO (a, ba)
 
 #ifdef WITH_BYTESTRING_SUPPORT
 instance ByteArrayAccess B.ByteString where
@@ -64,20 +70,33 @@ instance F.PrimType ty => ByteArrayAccess (F.UArray ty) where
 
 instance ByteArrayAccess F.String where
 #if MIN_VERSION_foundation(0,0,10)
-    length str = let F.CountOf i = F.length str in i
+    length str = let F.CountOf i = F.length bytes in i
 #else
-    length = F.length
+    length str = F.length bytes
 #endif
+      where
+        -- the Foundation's length return a number of elements not a number of
+        -- bytes. For @ByteArrayAccess@, because we are using an @Int@, we
+        -- didn't see that we were returning the wrong @CountOf@.
+        bytes = F.toBytes F.UTF8 str
     withByteArray s f = withByteArray (F.toBytes F.UTF8 s) f
 
 instance (Ord ty, F.PrimType ty) => ByteArray (F.UArray ty) where
     allocRet sz f = do
-#if MIN_VERSION_foundation(0,0,10)
-        mba <- F.new (F.CountOf sz)
-#else
-        mba <- F.new (F.Size sz)
-#endif
+        mba <- F.new $ sizeRecastBytes sz F.Proxy
         a   <- F.withMutablePtr mba (f . castPtr)
         ba  <- F.unsafeFreeze mba
         return (a, ba)
+      where
+#if MIN_VERSION_foundation(0,0,10)
+        sizeRecastBytes :: F.PrimType ty => Int -> F.Proxy ty -> F.CountOf ty
+        sizeRecastBytes w p = F.CountOf $ w `Prelude.quot` szTy
+            where !(F.CountOf szTy) = F.primSizeInBytes p
+        {-# INLINE [1] sizeRecastBytes #-}
+#else
+        sizeRecastBytes :: F.PrimType ty => Int -> F.Proxy ty -> F.Size ty
+        sizeRecastBytes w p = F.Size $ w `Prelude.quot` szTy
+            where !(F.Size szTy) = F.primSizeInBytes p
+        {-# INLINE [1] sizeRecastBytes #-}
+#endif
 #endif
