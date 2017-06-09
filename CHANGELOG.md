@@ -1,3 +1,26 @@
+## 0.14.6
+
+* Fix allocRet using unit of bytes but using as unit of ty directly without adaptation
+
+## 0.14.5
+
+* Fix bug in memXorWith not working as advertised if source different from destination
+
+## 0.14.4
+
+* Add support for foundation uarray creation
+* optimise memXorWith
+
+## 0.14.3
+
+* Add support for foundation uarray peeking
+
+## 0.14.2
+
+* Fix use of ghc 8.2 touch
+* Prevent span from reading past buffer
+* cleanup .prof spam
+
 ## 0.14.1
 
 * Fix `Show` instance of Bytes (Oliver Chéron)
