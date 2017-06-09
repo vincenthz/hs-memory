@@ -55,7 +55,7 @@ uarrayRecastW8 :: F.PrimType ty => F.UArray ty -> F.UArray F.Word8
 uarrayRecastW8 = F.recast
 
 instance F.PrimType ty => ByteArrayAccess (F.UArray ty) where
-#if MIN_VERSION_foundation(0,0,9)
+#if MIN_VERSION_foundation(0,0,10)
     length a = let F.CountOf i = F.length (uarrayRecastW8 a) in i
 #else
     length = F.length . uarrayRecastW8
@@ -63,7 +63,7 @@ instance F.PrimType ty => ByteArrayAccess (F.UArray ty) where
     withByteArray a f = F.withPtr (uarrayRecastW8 a) (f . castPtr)
 
 instance ByteArrayAccess F.String where
-#if MIN_VERSION_foundation(0,0,9)
+#if MIN_VERSION_foundation(0,0,10)
     length str = let F.CountOf i = F.length str in i
 #else
     length = F.length
@@ -72,7 +72,7 @@ instance ByteArrayAccess F.String where
 
 instance (Ord ty, F.PrimType ty) => ByteArray (F.UArray ty) where
     allocRet sz f = do
-#if MIN_VERSION_foundation(0,0,9)
+#if MIN_VERSION_foundation(0,0,10)
         mba <- F.new (F.CountOf sz)
 #else
         mba <- F.new (F.Size sz)
