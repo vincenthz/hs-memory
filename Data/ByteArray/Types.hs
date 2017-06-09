@@ -90,13 +90,17 @@ instance (Ord ty, F.PrimType ty) => ByteArray (F.UArray ty) where
       where
 #if MIN_VERSION_foundation(0,0,10)
         sizeRecastBytes :: F.PrimType ty => Int -> F.Proxy ty -> F.CountOf ty
-        sizeRecastBytes w p = F.CountOf $ w `Prelude.quot` szTy
-            where !(F.CountOf szTy) = F.primSizeInBytes p
+        sizeRecastBytes w p = F.CountOf $
+            let (q,r) = w `Prelude.quotRem` szTy
+             in q + (if r == 0 then 0 else 1)
+          where !(F.CountOf szTy) = F.primSizeInBytes p
         {-# INLINE [1] sizeRecastBytes #-}
 #else
         sizeRecastBytes :: F.PrimType ty => Int -> F.Proxy ty -> F.Size ty
-        sizeRecastBytes w p = F.Size $ w `Prelude.quot` szTy
-            where !(F.Size szTy) = F.primSizeInBytes p
+        sizeRecastBytes w p = F.Size $
+            let (q,r) = w `Prelude.quotRem` szTy
+             in q + (if r == 0 then 0 else 1)
+          where !(F.Size szTy) = F.primSizeInBytes p
         {-# INLINE [1] sizeRecastBytes #-}
 #endif
 #endif
