@@ -19,7 +19,7 @@ License:             BSD3
 License-file:        LICENSE
 Copyright:           Vincent Hanquez <vincent@snarc.org>
 Author:              Vincent Hanquez <vincent@snarc.org>
-Maintainer:          vincent@snarc.org
+Maintainer:          vincent@snarc.org, Nicolas Di Prima <nicolas@primetype.co.uk>
 Category:            memory
 Stability:           experimental
 Build-Type:          Simple
@@ -115,3 +115,6 @@ Test-Suite test-memory
                    , memory
   ghc-options:       -Wall -fno-warn-orphans -fno-warn-missing-signatures -threaded
   default-language:  Haskell2010
+  if flag(support_foundation)
+    CPP-options:     -DWITH_FOUNDATION_SUPPORT
+    Build-depends:   foundation >= 0.0.8
