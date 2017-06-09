@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE Rank2Types #-}
 module Main where
@@ -12,6 +13,10 @@ import qualified Data.ByteArray.Encoding as B
 import qualified Data.ByteArray.Parse    as Parse
 
 import qualified SipHash
+
+#ifdef WITH_FOUNDATION_SUPPORT
+import qualified Foundation as F
+#endif
 
 data Backend = BackendByte | BackendScrubbedBytes
     deriving (Show,Eq,Bounded,Enum)
@@ -161,6 +166,9 @@ main = defaultMain $ testGroup "memory"
         ]
     , testShowProperty "showing" $ \witnessID expectedShow (Words8 l) ->
           (show . witnessID . B.pack $ l) == expectedShow l
+#ifdef WITH_FOUNDATION_SUPPORT
+    , testFoundationTypes
+#endif
     ]
   where
     basicProperties witnessID =
@@ -213,3 +221,20 @@ main = defaultMain $ testGroup "memory"
             let b = witnessID (B.pack l)
              in B.span (const False) b == (B.empty, b)
         ]
+
+#ifdef WITH_FOUNDATION_SUPPORT
+testFoundationTypes = testGroup "Foundation"
+  [ testCase "allocRet 4 _ :: F.UArray Int8 === 4" $ do
+      x <- (B.length :: F.UArray F.Int8 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+      assertEqual "" 4 x
+  , testCase "allocRet 4 _ :: F.UArray Int16 === 4" $ do
+      x <- (B.length :: F.UArray F.Int16 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+      assertEqual "" 4 x
+  , testCase "allocRet 4 _ :: F.UArray Int32 === 4" $ do
+      x <- (B.length :: F.UArray F.Int32 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+      assertEqual "" 4 x
+  , testCase "allocRet 4 _ :: F.UArray Int64 === 0" $ do
+      x <- (B.length :: F.UArray F.Int64 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+      assertEqual "" 0 x
+  ]
+#endif
