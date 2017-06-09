@@ -55,16 +55,16 @@ uarrayRecastW8 :: F.PrimType ty => F.UArray ty -> F.UArray F.Word8
 uarrayRecastW8 = F.recast
 
 instance F.PrimType ty => ByteArrayAccess (F.UArray ty) where
-    length = F.length . uarrayRecastW8
+    length a = let F.CountOf i = F.length (uarrayRecastW8 a) in i
     withByteArray a f = F.withPtr (uarrayRecastW8 a) (f . castPtr)
 
 instance ByteArrayAccess F.String where
-    length = F.length
+    length str = let F.CountOf i = F.length str in i
     withByteArray s f = withByteArray (F.toBytes F.UTF8 s) f
 
 instance (Ord ty, F.PrimType ty) => ByteArray (F.UArray ty) where
     allocRet sz f = do
-        mba <- F.new (F.Size sz)
+        mba <- F.new (F.CountOf sz)
         a   <- F.withMutablePtr mba (f . castPtr)
         ba  <- F.unsafeFreeze mba
         return (a, ba)
