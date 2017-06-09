@@ -233,8 +233,8 @@ testFoundationTypes = testGroup "Foundation"
   , testCase "allocRet 4 _ :: F.UArray Int32 === 4" $ do
       x <- (B.length :: F.UArray F.Int32 -> Int) . snd <$> B.allocRet 4 (const $ return ())
       assertEqual "" 4 x
-  , testCase "allocRet 4 _ :: F.UArray Int64 === 0" $ do
+  , testCase "allocRet 4 _ :: F.UArray Int64 === 8" $ do
       x <- (B.length :: F.UArray F.Int64 -> Int) . snd <$> B.allocRet 4 (const $ return ())
-      assertEqual "" 0 x
+      assertEqual "" 8 x
   ]
 #endif
