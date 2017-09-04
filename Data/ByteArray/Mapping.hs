@@ -13,7 +13,6 @@ module Data.ByteArray.Mapping
     , mapAsWord128
     ) where
 
-import           Data.Bits (shiftR)
 import           Data.ByteArray.Types
 import           Data.ByteArray.Methods
 import           Data.Memory.Internal.Compat
