@@ -124,7 +124,7 @@ bytesEq b1@(Bytes m1) b2@(Bytes m2)
                     (# s'', e2 #) ->
                         if booleanPrim (eqWord# e1 e2)
                             then loop (i +# 1#) s''
-                            else (# s', False #)
+                            else (# s'', False #)
     {-# INLINE loop #-}
 
 bytesCompare :: Bytes -> Bytes -> Ordering
