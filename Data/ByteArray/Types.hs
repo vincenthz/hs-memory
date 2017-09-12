@@ -25,7 +25,7 @@ import qualified Foundation as F
 import qualified Foundation.Collection as F
 import qualified Foundation.String as F (toBytes, Encoding(UTF8))
 import qualified Foundation.Array.Internal as F
-import qualified Foundation.Primitive as F
+import qualified Foundation.Primitive as F (primSizeInBytes)
 #endif
 
 -- | Class to Access size properties and data of a ByteArray
