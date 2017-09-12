@@ -1,3 +1,11 @@
+## 0.14.8
+
+* Fix incompatibility with foundation 0.0.14
+
+## 0.14.7
+
+* Fix typo in state passing
+
 ## 0.14.6
 
 * Fix allocRet using unit of bytes but using as unit of ty directly without adaptation
