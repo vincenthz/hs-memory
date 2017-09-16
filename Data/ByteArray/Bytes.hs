@@ -7,6 +7,7 @@
 --
 -- Simple and efficient byte array types
 --
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -17,7 +18,12 @@ module Data.ByteArray.Bytes
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
+#if MIN_VERSION_base(4,9,0)
+import           Data.Semigroup
+import           Data.Foldable (toList)
+#else
 import           Data.Monoid
+#endif
 import           Data.Memory.PtrMethods
 import           Data.Memory.Internal.Imports
 import           Data.Memory.Internal.CompatPrim
@@ -33,10 +39,17 @@ instance Eq Bytes where
     (==) = bytesEq
 instance Ord Bytes where
     compare = bytesCompare
+#if MIN_VERSION_base(4,9,0)
+instance Semigroup Bytes where
+    b1 <> b2      = unsafeDoIO $ bytesAppend b1 b2
+    sconcat       = unsafeDoIO . bytesConcat . toList
+#endif
 instance Monoid Bytes where
     mempty        = unsafeDoIO (newBytes 0)
+#if !(MIN_VERSION_base(4,11,0))
     mappend b1 b2 = unsafeDoIO $ bytesAppend b1 b2
     mconcat       = unsafeDoIO . bytesConcat
+#endif
 instance NFData Bytes where
     rnf b = b `seq` ()
 instance ByteArrayAccess Bytes where
