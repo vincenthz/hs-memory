@@ -37,11 +37,6 @@ Flag support_bytestring
   Default:           True
   Manual:            True
 
-Flag support_foundation
-  Description:       add support for foundation strings and unboxed array
-  Default:           True
-  Manual:            True
-
 Flag support_deepseq
   Description:       add deepseq instances for memory types
   Default:           True
@@ -77,6 +72,7 @@ Library
                      Data.ByteArray.View
   Build-depends:     base >= 4 && < 5
                    , ghc-prim
+                   , basement
   -- FIXME armel or mispel is also little endian.
   -- might be a good idea to also add a runtime autodetect mode.
   -- ARCH_ENDIAN_UNKNOWN
@@ -94,9 +90,6 @@ Library
   if flag(support_deepseq)
     CPP-options:     -DWITH_DEEPSEQ_SUPPORT
     Build-depends:   deepseq >= 1.1
-  if flag(support_foundation)
-    CPP-options:     -DWITH_FOUNDATION_SUPPORT
-    Build-depends:   foundation >= 0.0.8
 
   ghc-options:       -Wall -fwarn-tabs
   default-language:  Haskell2010
@@ -115,6 +108,3 @@ Test-Suite test-memory
                    , memory
   ghc-options:       -Wall -fno-warn-orphans -fno-warn-missing-signatures -threaded
   default-language:  Haskell2010
-  if flag(support_foundation)
-    CPP-options:     -DWITH_FOUNDATION_SUPPORT
-    Build-depends:   foundation >= 0.0.8
