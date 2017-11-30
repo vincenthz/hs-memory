@@ -16,7 +16,12 @@ module Data.ByteArray.ScrubbedBytes
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
+#if MIN_VERSION_base(4,9,0)
+import           Data.Semigroup
+import           Data.Foldable (toList)
+#else
 import           Data.Monoid
+#endif
 import           Data.String (IsString(..))
 import           Data.Memory.PtrMethods          (memCopy, memConstEqual)
 import           Data.Memory.Internal.CompatPrim
@@ -43,10 +48,17 @@ instance Eq ScrubbedBytes where
     (==) = scrubbedBytesEq
 instance Ord ScrubbedBytes where
     compare = scrubbedBytesCompare
+#if MIN_VERSION_base(4,9,0)
+instance Semigroup ScrubbedBytes where
+    b1 <> b2      = unsafeDoIO $ scrubbedBytesAppend b1 b2
+    sconcat       = unsafeDoIO . scrubbedBytesConcat . toList
+#endif
 instance Monoid ScrubbedBytes where
     mempty        = unsafeDoIO (newScrubbedBytes 0)
+#if !(MIN_VERSION_base(4,11,0))
     mappend b1 b2 = unsafeDoIO $ scrubbedBytesAppend b1 b2
     mconcat       = unsafeDoIO . scrubbedBytesConcat
+#endif
 instance NFData ScrubbedBytes where
     rnf b = b `seq` ()
 instance IsString ScrubbedBytes where
