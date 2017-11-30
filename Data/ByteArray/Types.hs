@@ -14,19 +14,19 @@ module Data.ByteArray.Types
 
 import           Foreign.Ptr
 import           Data.Monoid
+import           Data.Proxy
+import           Data.Word
 
 #ifdef WITH_BYTESTRING_SUPPORT
 import qualified Data.ByteString as B (length)
 import qualified Data.ByteString.Internal as B
 import           Foreign.ForeignPtr (withForeignPtr)
 #endif
-#ifdef WITH_FOUNDATION_SUPPORT
-import qualified Foundation as F
-import qualified Foundation.Collection as F
-import qualified Foundation.String as F (toBytes, Encoding(UTF8))
-import qualified Foundation.Array.Internal as F
-import qualified Foundation.Primitive as F (primSizeInBytes)
-#endif
+
+import qualified Basement.Types.OffsetSize as F
+import qualified Basement.UArray as F
+import qualified Basement.String as F (String, toBytes, Encoding(UTF8))
+import qualified Basement.PrimType as F (primSizeInBytes)
 
 -- | Class to Access size properties and data of a ByteArray
 class ByteArrayAccess ba where
@@ -56,24 +56,15 @@ instance ByteArray B.ByteString where
         return (r, B.PS fptr 0 sz)
 #endif
 
-#ifdef WITH_FOUNDATION_SUPPORT
-uarrayRecastW8 :: F.PrimType ty => F.UArray ty -> F.UArray F.Word8
+uarrayRecastW8 :: F.PrimType ty => F.UArray ty -> F.UArray Word8
 uarrayRecastW8 = F.recast
 
 instance F.PrimType ty => ByteArrayAccess (F.UArray ty) where
-#if MIN_VERSION_foundation(0,0,10)
     length a = let F.CountOf i = F.length (uarrayRecastW8 a) in i
-#else
-    length = F.length . uarrayRecastW8
-#endif
     withByteArray a f = F.withPtr (uarrayRecastW8 a) (f . castPtr)
 
 instance ByteArrayAccess F.String where
-#if MIN_VERSION_foundation(0,0,10)
     length str = let F.CountOf i = F.length bytes in i
-#else
-    length str = F.length bytes
-#endif
       where
         -- the Foundation's length return a number of elements not a number of
         -- bytes. For @ByteArrayAccess@, because we are using an @Int@, we
@@ -83,24 +74,14 @@ instance ByteArrayAccess F.String where
 
 instance (Ord ty, F.PrimType ty) => ByteArray (F.UArray ty) where
     allocRet sz f = do
-        mba <- F.new $ sizeRecastBytes sz F.Proxy
+        mba <- F.new $ sizeRecastBytes sz Proxy
         a   <- F.withMutablePtr mba (f . castPtr)
         ba  <- F.unsafeFreeze mba
         return (a, ba)
       where
-#if MIN_VERSION_foundation(0,0,10)
-        sizeRecastBytes :: F.PrimType ty => Int -> F.Proxy ty -> F.CountOf ty
+        sizeRecastBytes :: F.PrimType ty => Int -> Proxy ty -> F.CountOf ty
         sizeRecastBytes w p = F.CountOf $
             let (q,r) = w `Prelude.quotRem` szTy
              in q + (if r == 0 then 0 else 1)
           where !(F.CountOf szTy) = F.primSizeInBytes p
         {-# INLINE [1] sizeRecastBytes #-}
-#else
-        sizeRecastBytes :: F.PrimType ty => Int -> F.Proxy ty -> F.Size ty
-        sizeRecastBytes w p = F.Size $
-            let (q,r) = w `Prelude.quotRem` szTy
-             in q + (if r == 0 then 0 else 1)
-          where !(F.Size szTy) = F.primSizeInBytes p
-        {-# INLINE [1] sizeRecastBytes #-}
-#endif
-#endif
