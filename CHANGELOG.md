@@ -1,3 +1,7 @@
+## 0.14.9
+
+* Reduce dependency to basement
+
 ## 0.14.8
 
 * Fix incompatibility with foundation 0.0.14
