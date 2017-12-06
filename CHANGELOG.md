@@ -1,3 +1,7 @@
+## 0.14.10
+
+* Reintroduce foundation compatibility with old version
+
 ## 0.14.9
 
 * Reduce dependency to basement
