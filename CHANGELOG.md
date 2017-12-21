@@ -1,3 +1,7 @@
+## 0.14.11
+
+* Fix issue in unBase64 with an empty bytestring that would cause a segfault
+
 ## 0.14.10
 
 * Reintroduce foundation compatibility with old version
