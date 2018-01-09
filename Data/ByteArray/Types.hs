@@ -101,13 +101,13 @@ instance (Ord ty, Base.PrimType ty) => ByteArray (Base.UArray ty) where
         a   <- Base.withMutablePtr mba (f . castPtr)
         ba  <- Base.unsafeFreeze mba
         return (a, ba)
-      where
-        sizeRecastBytes :: Base.PrimType ty => Int -> Proxy ty -> Base.CountOf ty
-        sizeRecastBytes w p = Base.CountOf $
-            let (q,r) = w `Prelude.quotRem` szTy
-             in q + (if r == 0 then 0 else 1)
-          where !(Base.CountOf szTy) = Base.primSizeInBytes p
-        {-# INLINE [1] sizeRecastBytes #-}
+
+sizeRecastBytes :: Base.PrimType ty => Int -> Proxy ty -> Base.CountOf ty
+sizeRecastBytes w p = Base.CountOf $
+    let (q,r) = w `Prelude.quotRem` szTy
+     in q + (if r == 0 then 0 else 1)
+  where !(Base.CountOf szTy) = Base.primSizeInBytes p
+{-# INLINE [1] sizeRecastBytes #-}
 
 #ifdef LEGACY_FOUNDATION_SUPPORT
 
