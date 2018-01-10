@@ -37,8 +37,10 @@ import qualified Basement.UArray as Base
 import qualified Basement.String as Base (String, toBytes, Encoding(UTF8))
 import qualified Basement.PrimType as Base (primSizeInBytes)
 
+import           Data.Memory.PtrMethods (memCopy)
+
 #if MIN_VERSION_basement(0,0,5)
-import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint)
+import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint, copyToPtr)
 import qualified Basement.Block as Block
 import qualified Basement.Block.Mutable as Block
 #endif
@@ -55,12 +57,17 @@ import qualified Foundation.Primitive as F (primSizeInBytes)
 
 #endif
 
+import Prelude hiding (length)
+
 -- | Class to Access size properties and data of a ByteArray
 class ByteArrayAccess ba where
     -- | Return the length in bytes of a bytearray
     length        :: ba -> Int
     -- | Allow to use using a pointer
     withByteArray :: ba -> (Ptr p -> IO a) -> IO a
+    -- | Copy the data of a bytearray to a ptr
+    copyByteArrayToPtr :: ba -> Ptr p -> IO ()
+    copyByteArrayToPtr a dst = withByteArray a $ \src -> memCopy (castPtr dst) src (length a)
 
 -- | Class to allocate new ByteArray of specific size
 class (Eq ba, Ord ba, Monoid ba, ByteArrayAccess ba) => ByteArray ba where
