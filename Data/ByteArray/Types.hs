@@ -99,6 +99,9 @@ baseBlockRecastW8 = Block.unsafeCast -- safe with Word8 destination
 instance Base.PrimType ty => ByteArrayAccess (Block.Block ty) where
     length a = let Base.CountOf i = Block.length (baseBlockRecastW8 a) in i
     withByteArray a f = Block.withPtr (baseBlockRecastW8 a) (f . castPtr)
+    copyByteArrayToPtr ba dst = do
+        mb <- Block.unsafeThaw (baseBlockRecastW8 ba)
+        Block.copyToPtr mb 0 (castPtr dst) (Block.length $ baseBlockRecastW8 ba)
 #endif
 
 baseUarrayRecastW8 :: Base.PrimType ty => Base.UArray ty -> Base.UArray Word8
@@ -107,6 +110,9 @@ baseUarrayRecastW8 = Base.recast
 instance Base.PrimType ty => ByteArrayAccess (Base.UArray ty) where
     length a = let Base.CountOf i = Base.length (baseUarrayRecastW8 a) in i
     withByteArray a f = Base.withPtr (baseUarrayRecastW8 a) (f . castPtr)
+#if MIN_VERSION_basement(0,0,5)
+    copyByteArrayToPtr ba dst = Base.copyToPtr ba (castPtr dst)
+#endif
 
 instance ByteArrayAccess Base.String where
     length str = let Base.CountOf i = Base.length bytes in i
