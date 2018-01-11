@@ -37,6 +37,14 @@ import qualified Basement.UArray as Base
 import qualified Basement.String as Base (String, toBytes, Encoding(UTF8))
 import qualified Basement.PrimType as Base (primSizeInBytes)
 
+import           Data.Memory.PtrMethods (memCopy)
+
+#if MIN_VERSION_basement(0,0,5)
+import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint, copyToPtr)
+import qualified Basement.Block as Block
+import qualified Basement.Block.Mutable as Block
+#endif
+
 #ifdef LEGACY_FOUNDATION_SUPPORT
 
 import qualified Foundation as F
@@ -49,12 +57,17 @@ import qualified Foundation.Primitive as F (primSizeInBytes)
 
 #endif
 
+import Prelude hiding (length)
+
 -- | Class to Access size properties and data of a ByteArray
 class ByteArrayAccess ba where
     -- | Return the length in bytes of a bytearray
     length        :: ba -> Int
     -- | Allow to use using a pointer
     withByteArray :: ba -> (Ptr p -> IO a) -> IO a
+    -- | Copy the data of a bytearray to a ptr
+    copyByteArrayToPtr :: ba -> Ptr p -> IO ()
+    copyByteArrayToPtr a dst = withByteArray a $ \src -> memCopy (castPtr dst) src (length a)
 
 -- | Class to allocate new ByteArray of specific size
 class (Eq ba, Ord ba, Monoid ba, ByteArrayAccess ba) => ByteArray ba where
@@ -79,12 +92,27 @@ instance ByteArray Bytestring.ByteString where
 
 #ifdef WITH_FOUNDATION_SUPPORT
 
+#if MIN_VERSION_basement(0,0,5)
+baseBlockRecastW8 :: Base.PrimType ty => Block.Block ty -> Block.Block Word8
+baseBlockRecastW8 = Block.unsafeCast -- safe with Word8 destination
+
+instance Base.PrimType ty => ByteArrayAccess (Block.Block ty) where
+    length a = let Base.CountOf i = Block.length (baseBlockRecastW8 a) in i
+    withByteArray a f = Block.withPtr (baseBlockRecastW8 a) (f . castPtr)
+    copyByteArrayToPtr ba dst = do
+        mb <- Block.unsafeThaw (baseBlockRecastW8 ba)
+        Block.copyToPtr mb 0 (castPtr dst) (Block.length $ baseBlockRecastW8 ba)
+#endif
+
 baseUarrayRecastW8 :: Base.PrimType ty => Base.UArray ty -> Base.UArray Word8
 baseUarrayRecastW8 = Base.recast
 
 instance Base.PrimType ty => ByteArrayAccess (Base.UArray ty) where
     length a = let Base.CountOf i = Base.length (baseUarrayRecastW8 a) in i
     withByteArray a f = Base.withPtr (baseUarrayRecastW8 a) (f . castPtr)
+#if MIN_VERSION_basement(0,0,5)
+    copyByteArrayToPtr ba dst = Base.copyToPtr ba (castPtr dst)
+#endif
 
 instance ByteArrayAccess Base.String where
     length str = let Base.CountOf i = Base.length bytes in i
@@ -95,19 +123,32 @@ instance ByteArrayAccess Base.String where
         bytes = Base.toBytes Base.UTF8 str
     withByteArray s f = withByteArray (Base.toBytes Base.UTF8 s) f
 
+#if MIN_VERSION_basement(0,0,5)
+instance (Ord ty, Base.PrimType ty) => ByteArray (Block.Block ty) where
+    allocRet sz f = do
+        mba <- Block.new $ sizeRecastBytes sz Proxy
+        a   <- Block.withMutablePtrHint True False mba (f . castPtr)
+        ba  <- Block.unsafeFreeze mba
+        return (a, ba)
+#endif
+
 instance (Ord ty, Base.PrimType ty) => ByteArray (Base.UArray ty) where
     allocRet sz f = do
         mba <- Base.new $ sizeRecastBytes sz Proxy
+#if MIN_VERSION_basement(0,0,5)
+        a   <- BaseMutable.withMutablePtrHint True False mba (f . castPtr)
+#else
         a   <- Base.withMutablePtr mba (f . castPtr)
+#endif
         ba  <- Base.unsafeFreeze mba
         return (a, ba)
-      where
-        sizeRecastBytes :: Base.PrimType ty => Int -> Proxy ty -> Base.CountOf ty
-        sizeRecastBytes w p = Base.CountOf $
-            let (q,r) = w `Prelude.quotRem` szTy
-             in q + (if r == 0 then 0 else 1)
-          where !(Base.CountOf szTy) = Base.primSizeInBytes p
-        {-# INLINE [1] sizeRecastBytes #-}
+
+sizeRecastBytes :: Base.PrimType ty => Int -> Proxy ty -> Base.CountOf ty
+sizeRecastBytes w p = Base.CountOf $
+    let (q,r) = w `Prelude.quotRem` szTy
+     in q + (if r == 0 then 0 else 1)
+  where !(Base.CountOf szTy) = Base.primSizeInBytes p
+{-# INLINE [1] sizeRecastBytes #-}
 
 #ifdef LEGACY_FOUNDATION_SUPPORT
 

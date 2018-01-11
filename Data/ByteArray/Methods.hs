@@ -223,7 +223,7 @@ copyRet bs f =
 copyAndFreeze :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> bs2
 copyAndFreeze bs f =
     inlineUnsafeCreate (length bs) $ \d -> do
-        withByteArray bs $ \s -> memCopy d s (length bs)
+        copyByteArrayToPtr bs d
         f (castPtr d)
 {-# NOINLINE copyAndFreeze #-}
 

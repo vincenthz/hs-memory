@@ -118,4 +118,4 @@ Test-Suite test-memory
   default-language:  Haskell2010
   if flag(support_foundation)
     CPP-options:     -DWITH_FOUNDATION_SUPPORT
-    Build-depends:   foundation >= 0.0.8
+    Build-depends:   basement, foundation >= 0.0.8
