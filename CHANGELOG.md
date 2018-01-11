@@ -1,3 +1,9 @@
+## 0.14.12
+
+* Optimise copy operations and convert
+* Add instance of ByteArrayAccess and ByteArray for Block
+* Add Block and UArray in memory's tests
+
 ## 0.14.11
 
 * Fix issue in unBase64 with an empty bytestring that would cause a segfault
