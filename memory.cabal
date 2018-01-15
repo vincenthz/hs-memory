@@ -75,7 +75,7 @@ Library
                      Data.ByteArray.Methods
                      Data.ByteArray.MemView
                      Data.ByteArray.View
-  Build-depends:     base >= 4 && < 5
+  Build-depends:     base >= 4.8 && < 5
                    , ghc-prim
   -- FIXME armel or mispel is also little endian.
   -- might be a good idea to also add a runtime autodetect mode.
