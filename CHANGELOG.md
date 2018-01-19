@@ -1,3 +1,7 @@
+## 0.14.13
+
+* Handle compat SPECIALIZE for older GHC
+
 ## 0.14.12
 
 * Optimise copy operations and convert
