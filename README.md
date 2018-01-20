@@ -54,7 +54,7 @@ On the following haskell versions:
 * GHC 8.0
 * GHC 8.2
 
-Some older versions or differents are possibly working too
+Some older versions or different systems are possibly working too
 
 
 
