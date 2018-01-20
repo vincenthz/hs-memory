@@ -50,9 +50,11 @@ On the following architectures:
 
 On the following haskell versions:
 
-* GHC 7.0.x
-* GHC 7.4.x
-* GHC 7.6.x
-* GHC 7.8.x
-* GHC 7.10.x
+* GHC 7.10
+* GHC 8.0
+* GHC 8.2
+
+Some older versions or differents are possibly working too
+
+
 
