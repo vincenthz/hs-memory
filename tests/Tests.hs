@@ -16,13 +16,18 @@ import qualified SipHash
 
 #ifdef WITH_FOUNDATION_SUPPORT
 import qualified Foundation as F
+#if MIN_VERSION_basement(0,0,5)
 import           Basement.Block (Block)
+#endif
 import           Basement.UArray (UArray)
 #endif
 
 data Backend = BackendByte | BackendScrubbedBytes
 #ifdef WITH_FOUNDATION_SUPPORT
-    | BackendBlock | BackendUArray
+#if MIN_VERSION_basement(0,0,5)
+    | BackendBlock
+#endif
+    | BackendUArray
 #endif
     deriving (Show,Eq,Bounded,Enum)
 
@@ -38,7 +43,9 @@ arbitraryBS n = do
         BackendByte          -> ArbitraryBS `fmap` ((B.pack `fmap` replicateM n arbitrary) :: Gen Bytes)
         BackendScrubbedBytes -> ArbitraryBS `fmap` ((B.pack `fmap` replicateM n arbitrary) :: Gen ScrubbedBytes)
 #ifdef WITH_FOUNDATION_SUPPORT
+#if MIN_VERSION_basement(0,0,5)
         BackendBlock         -> ArbitraryBS `fmap` ((B.pack `fmap` replicateM n arbitrary) :: Gen (Block Word8))
+#endif
         BackendUArray        -> ArbitraryBS `fmap` ((B.pack `fmap` replicateM n arbitrary) :: Gen (UArray Word8))
 #endif
 
@@ -69,7 +76,7 @@ testGroupBackends x l =
 #if MIN_VERSION_basement(0,0,5)
         , testGroup "Block" (l withBlockWitness)
 #endif
-        , testGroup "UArray" (l withBlockWitness)
+        , testGroup "UArray" (l withUArrayWitness)
 #endif
         ]
 
