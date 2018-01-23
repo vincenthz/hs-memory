@@ -7,6 +7,7 @@ import           Imports
 import           Utils
 import           Data.Char                    (chr)
 import           Data.Word
+import qualified Data.ByteString         as BS
 import           Data.ByteArray               (Bytes, ScrubbedBytes, ByteArray)
 import qualified Data.ByteArray          as B
 import qualified Data.ByteArray.Encoding as B
@@ -161,6 +162,28 @@ encodingTests witnessID =
                 outbs = B.convertFromBase base $ witnessID $ B.pack $ unS out
              in Right inpbs @=? outbs
 
+-- check not to touch internal null pointer of the empty ByteString
+bsNullEncodingTest =
+    testGroup "BS-null"
+      [ testGroup "BASE64"
+        [ testCase "encode-KAT" $ toTest B.Base64
+        , testCase "decode-KAT" $ toBackTest B.Base64
+        ]
+      , testGroup "BASE32"
+        [ testCase "encode-KAT" $ toTest B.Base32
+        , testCase "decode-KAT" $ toBackTest B.Base32
+        ]
+      , testGroup "BASE16"
+        [ testCase "encode-KAT" $ toTest B.Base16
+        , testCase "decode-KAT" $ toBackTest B.Base16
+        ]
+      ]
+  where
+    toTest base =
+      B.convertToBase base BS.empty @=? BS.empty
+    toBackTest base =
+      B.convertFromBase base BS.empty @=? Right BS.empty
+
 parsingTests witnessID =
     [ testCase "parse" $
         let input = witnessID $ B.pack $ unS "xx abctest"
@@ -174,6 +197,7 @@ parsingTests witnessID =
 
 main = defaultMain $ testGroup "memory"
     [ localOption (QuickCheckTests 5000) $ testGroupBackends "basic" basicProperties
+    , bsNullEncodingTest
     , testGroupBackends "encoding" encodingTests
     , testGroupBackends "parsing" parsingTests
     , testGroupBackends "hashing" $ \witnessID ->
