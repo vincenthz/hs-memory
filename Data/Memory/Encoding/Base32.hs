@@ -111,6 +111,7 @@ toBase32Per5Bytes (W8# i1, W8# i2, W8# i3, W8# i4, W8# i5) =
 -- if the length is not a multiple of 8, Nothing is returned
 unBase32Length :: Ptr Word8 -> Int -> IO (Maybe Int)
 unBase32Length src len
+    | len < 1            = return $ Just 0
     | (len `mod` 8) /= 0 = return Nothing
     | otherwise          = do
         last1Byte <- peekByteOff src (len - 1)
@@ -250,4 +251,3 @@ fromBase32Per8Bytes (i1, i2, i3, i4, i5, i6, i7, i8) =
                  \\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\
                  \\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\
                  \\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"#
-
