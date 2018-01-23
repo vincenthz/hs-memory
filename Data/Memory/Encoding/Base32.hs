@@ -58,7 +58,7 @@ toBase32 dst src len = loop 0 0
          -> Int -- index output
          -> IO ()
     loop i di
-        | i >  len  = return ()
+        | i >= len  = return ()
         | otherwise = do
             i1 <- peekByteOff src i
             i2 <- peekOrZero (i + 1)
