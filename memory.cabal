@@ -110,6 +110,7 @@ Test-Suite test-memory
                      SipHash
                      Utils
   Build-Depends:     base >= 3 && < 5
+                   , bytestring
                    , tasty
                    , tasty-quickcheck
                    , tasty-hunit
