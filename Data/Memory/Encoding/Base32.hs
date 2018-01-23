@@ -58,7 +58,7 @@ toBase32 dst src len = loop 0 0
          -> Int -- index output
          -> IO ()
     loop i di
-        | i >  len  = return ()
+        | i >= len  = return ()
         | otherwise = do
             i1 <- peekByteOff src i
             i2 <- peekOrZero (i + 1)
@@ -250,4 +250,3 @@ fromBase32Per8Bytes (i1, i2, i3, i4, i5, i6, i7, i8) =
                  \\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\
                  \\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\
                  \\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"#
-
