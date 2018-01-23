@@ -1,3 +1,8 @@
+## 0.14.14
+
+* Fix bounds issues with empty strings in base64 and base32
+* Improve tests compatibility w.r.t old basement version
+
 ## 0.14.13
 
 * Handle compat SPECIALIZE for older GHC
