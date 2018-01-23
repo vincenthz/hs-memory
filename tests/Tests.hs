@@ -92,6 +92,7 @@ base64Kats =
     , ("easure.", "ZWFzdXJlLg==")
     , ("asure.", "YXN1cmUu")
     , ("sure.", "c3VyZS4=")
+    , ("", "")
     ]
 
 base64URLKats =
