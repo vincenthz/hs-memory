@@ -1,48 +1,68 @@
+# Use new container infrastructure to enable caching
 sudo: false
 
-env:
- - CABALVER=1.22 GHCVER=7.10.3
- - CABALVER=1.24 GHCVER=8.0.2 RUNTEST=0
- - CABALVER=1.24 GHCVER=8.2.1 RUNTEST=0
- - CABALVER=head GHCVER=head RUNTEST=0
+# Caching so the next build will be fast too.
+cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
 
+# The different configurations we want to test. We have BUILD=cabal which uses
+# cabal-install, and BUILD=stack which uses Stack.
 matrix:
-  allow_failures:
-   - env: CABALVER=head GHCVER=head RUNTEST=0
+  include:
+  - env: BUILD=cabal
+    language: haskell
+    ghc: ghc-7.10.3
+  - env: BUILD=cabal
+    language: haskell
+    ghc: ghc-8.0.2
+  - env: BUILD=cabal
+    language: haskell
+    ghc: ghc-8.2.1
+  - env: BUILD=cabal
+    language: haskell
+    ghc: ghc-8.2.2
+  - env: BUILD=stack
+    language: generic
+    addons: { apt: { packages: [ libgmp-dev ] } }
+    compiler: ghc
 
-addons:
-    apt:
-        sources:
-         - hvr-ghc
-        packages:
-         - cabal-install-1.22
-         - cabal-install-1.24
-         - cabal-install-head
-         - ghc-7.10.3
-         - ghc-8.0.2
-         - ghc-8.2.1
-         - ghc-head
-
-before_install:
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$PATH
+  allow_failures: []
 
 install:
- - cabal --version
- - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
- - travis_retry cabal update
- - if [ "${RUNTEST}" != "0" ]; then cabal install --only-dependencies --enable-tests; else cabal install --only-dependencies; fi
+  - export PATH=$HOME/.local/bin::$HOME/.cabal/bin:$PATH
+  - mkdir -p ~/.local/bin
+  - |
+    case "$BUILD" in
+      stack)
+        if [ `uname` = "Darwin" ]
+        then
+          travis_retry curl --insecure -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin
+        else
+          travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+        fi
+      ;;
+    cabal)
+      ;;
+    esac
 
 script:
- - if [ "${RUNTEST}" != "0" ]; then cabal configure --enable-tests -v2; else cabal configure -v2; fi
- - cabal build
- - if [ "${RUNTEST}" != "0" ]; then cabal test; fi;
- - cabal check
- - cabal sdist
- - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal install --force-reinstalls "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi
+- |
+  set -ex
+  if [ "x${RUNTEST}" = "xfalse" ]; then exit 0; fi
+  case "$BUILD" in
+    stack)
+      stack --no-terminal test \
+            --install-ghc \
+            --bench --no-run-benchmarks
+      ;;
+    cabal)
+      cabal install --only-dependencies --enable-tests
+      cabal test
+      cabal check
+      cabal sdist
+      ;;
+  esac
+  set +ex
