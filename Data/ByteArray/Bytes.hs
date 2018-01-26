@@ -11,6 +11,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Data.ByteArray.Bytes
     ( Bytes
     ) where
@@ -29,9 +30,11 @@ import           Data.Memory.Internal.Imports
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat      (unsafeDoIO)
 import           Data.ByteArray.Types
+import           Data.Typeable
 
 -- | Simplest Byte Array
 data Bytes = Bytes (MutableByteArray# RealWorld)
+  deriving (Typeable)
 
 instance Show Bytes where
     showsPrec p b r = showsPrec p (bytesUnpackChars b []) r
