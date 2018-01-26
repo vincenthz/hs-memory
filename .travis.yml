@@ -30,6 +30,7 @@ matrix:
     compiler: ghc
 
   allow_failures: []
+  # none at the moment
 
 install:
   - export PATH=$HOME/.local/bin::$HOME/.cabal/bin:$PATH
