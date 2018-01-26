@@ -21,13 +21,18 @@ matrix:
   - env: BUILD=cabal
     language: haskell
     ghc: "8.2"
+  - env: BUILD=cabal
+    language: haskell
+    ghc: head
   - env: BUILD=stack
     language: generic
     addons: { apt: { packages: [ libgmp-dev ] } }
     compiler: ghc
 
-  allow_failures: []
-  # none at the moment
+  allow_failures:
+  - env: BUILD=cabal
+    language: haskell
+    ghc: head
 
 install:
   - export PATH=$HOME/.local/bin::$HOME/.cabal/bin:$PATH
