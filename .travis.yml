@@ -14,16 +14,13 @@ matrix:
   include:
   - env: BUILD=cabal
     language: haskell
-    ghc: ghc-7.10.3
+    ghc: ghc-7.10
   - env: BUILD=cabal
     language: haskell
-    ghc: ghc-8.0.2
+    ghc: ghc-8.0
   - env: BUILD=cabal
     language: haskell
-    ghc: ghc-8.2.1
-  - env: BUILD=cabal
-    language: haskell
-    ghc: ghc-8.2.2
+    ghc: ghc-8.2
   - env: BUILD=stack
     language: generic
     addons: { apt: { packages: [ libgmp-dev ] } }
