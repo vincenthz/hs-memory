@@ -104,6 +104,7 @@ convert3 table (W8# a) (W8# b) (W8# c) =
 -- if the length is not a multiple of 4, Nothing is returned
 unBase64Length :: Ptr Word8 -> Int -> IO (Maybe Int)
 unBase64Length src len
+    | len < 1            = return $ Just 0
     | (len `mod` 4) /= 0 = return Nothing
     | otherwise          = do
         last1Byte <- peekByteOff src (len - 1)
