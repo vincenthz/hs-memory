@@ -9,6 +9,7 @@
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 module Data.ByteArray.ScrubbedBytes
     ( ScrubbedBytes
     ) where
@@ -23,6 +24,7 @@ import           Data.Foldable (toList)
 import           Data.Monoid
 #endif
 import           Data.String (IsString(..))
+import           Data.Typeable
 import           Data.Memory.PtrMethods          (memCopy, memConstEqual)
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
@@ -40,6 +42,7 @@ import           Foreign.Storable
 -- * A Eq instance that is constant time
 --
 data ScrubbedBytes = ScrubbedBytes (MutableByteArray# RealWorld)
+  deriving (Typeable)
 
 instance Show ScrubbedBytes where
     show _ = "<scrubbed-bytes>"

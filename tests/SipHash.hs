@@ -1,4 +1,5 @@
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 module SipHash (tests) where
 
@@ -268,9 +269,9 @@ vectors =
       )
     ]
 
-katTests witnessID v = map makeTest $ numberedList v
-    where makeTest (i, (key,msg,tag)) = testCase ("kat " ++ show i) $ tag @=? sipHash key (witnessID $ B.pack $ unS msg)
+katTests witnessID v = makeTest <$> numberedList v
+    where makeTest (i, (key,msg,tag)) = Property ("kat " <> show i) $ tag === sipHash key (witnessID $ B.pack $ unS msg)
 
 tests witnessID =
-    [ testGroup "KAT" $ katTests witnessID vectors
+    [ Group "KAT" $ katTests witnessID vectors
     ]
