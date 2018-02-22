@@ -7,6 +7,10 @@
 --
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE Rank2Types    #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies  #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Data.ByteArray.Types
     ( ByteArrayAccess(..)
     , ByteArray(..)
@@ -44,6 +48,10 @@ import qualified Basement.PrimType as Base (primSizeInBytes)
 import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint, copyToPtr)
 import qualified Basement.Block as Block
 import qualified Basement.Block.Mutable as Block
+#endif
+#if MIN_VERSION_basement(0,0,7)
+import           Basement.Nat
+import qualified Basement.BlockN as BlockN
 #endif
 
 #ifdef LEGACY_FOUNDATION_SUPPORT
@@ -103,6 +111,12 @@ instance Base.PrimType ty => ByteArrayAccess (Block.Block ty) where
     copyByteArrayToPtr ba dst = do
         mb <- Block.unsafeThaw (baseBlockRecastW8 ba)
         Block.copyToPtr mb 0 (castPtr dst) (Block.length $ baseBlockRecastW8 ba)
+#endif
+
+#if MIN_VERSION_basement(0,0,7)
+instance (KnownNat n, Base.PrimType ty, Base.Countable ty n) => ByteArrayAccess (BlockN.BlockN n ty) where
+    length a = let Base.CountOf i = BlockN.lengthBytes a in i
+    withByteArray a f = BlockN.withPtr a (f . castPtr)
 #endif
 
 baseUarrayRecastW8 :: Base.PrimType ty => Base.UArray ty -> Base.UArray Word8
