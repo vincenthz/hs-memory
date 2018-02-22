@@ -6,6 +6,7 @@
 -- Portability : Good
 --
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE Rank2Types #-}
@@ -18,6 +19,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Data.ByteArray.Sized
     ( ByteArrayN(..)
@@ -70,6 +73,13 @@ import Data.Proxy (Proxy(..))
 
 import Data.ByteArray.Types (ByteArrayAccess(..), ByteArray(..))
 
+#if MIN_VERSION_basement(0,0,7)
+import           Basement.BlockN (BlockN)
+import qualified Basement.BlockN as BlockN
+import qualified Basement.PrimType as Base
+import           Basement.Types.OffsetSize (Countable)
+#endif
+
 -- | Type class to emulate exactly the behaviour of 'ByteArray' but with
 -- a known length at compile time
 --
@@ -119,6 +129,17 @@ instance (ByteArray ba, KnownNat n) => ByteArrayN (SizedByteArray n ba) where
         pure (a, SizedByteArray ba)
       where
         n = fromInteger $ natVal p
+
+#if MIN_VERSION_basement(0,0,7)
+instance (ByteArrayAccess (BlockN n Word8), KnownNat n, Countable Word8 n, Base.PrimType Word8) => ByteArrayN (BlockN n Word8) where
+    type LengthN (BlockN n Word8) = n
+    allocRetN _ f = do
+        mba <- BlockN.new @n
+        a   <- BlockN.withMutablePtrHint True False mba (f . castPtr)
+        ba  <- BlockN.freeze mba
+        return (a, ba)
+#endif
+
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
 allocN :: forall n ba p . (ByteArrayN ba, KnownNat n, LengthN ba ~ n)
