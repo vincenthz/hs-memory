@@ -21,6 +21,9 @@ import qualified Data.ByteString.Internal as Bytestring
 import           Foreign.ForeignPtr (withForeignPtr)
 #endif
 
+import           Data.Memory.PtrMethods (memCopy)
+
+
 #ifdef WITH_FOUNDATION_SUPPORT
 
 #if MIN_VERSION_foundation(0,0,14) && MIN_VERSION_basement(0,0,0)
@@ -36,8 +39,6 @@ import qualified Basement.Types.OffsetSize as Base
 import qualified Basement.UArray as Base
 import qualified Basement.String as Base (String, toBytes, Encoding(UTF8))
 import qualified Basement.PrimType as Base (primSizeInBytes)
-
-import           Data.Memory.PtrMethods (memCopy)
 
 #if MIN_VERSION_basement(0,0,5)
 import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint, copyToPtr)
