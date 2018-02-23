@@ -7,9 +7,7 @@
 --
 
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -20,8 +18,6 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
