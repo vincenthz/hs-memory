@@ -21,6 +21,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 module Data.ByteArray.Sized
     ( ByteArrayN(..)
@@ -84,16 +87,16 @@ import           Basement.Types.OffsetSize (Countable)
 -- | Type class to emulate exactly the behaviour of 'ByteArray' but with
 -- a known length at compile time
 --
-class ByteArrayN (ba :: Nat -> *) where
+class (ByteArrayAccess c, KnownNat n) => ByteArrayN (n :: Nat) c | c -> n where
     -- | just like 'allocRet' but with the size at the type level
-    allocRet :: forall p a n . KnownNat n
-             => Proxy n
+    allocRet :: forall p a
+              . Proxy n
              -> (Ptr p -> IO a)
-             -> IO (a, ba n)
+             -> IO (a, c)
 
 -- | Wrapper around any collection type with the size as type parameter
 --
-newtype SizedByteArray ba (n :: Nat) = SizedByteArray { unSizedByteArray :: ba }
+newtype SizedByteArray (n :: Nat) ba = SizedByteArray { unSizedByteArray :: ba }
   deriving (Eq, Show, Typeable, Ord, NormalForm, Semigroup, Monoid)
 
 -- | create a 'SizedByteArray' from the given 'ByteArrayAccess' if the
@@ -101,7 +104,7 @@ newtype SizedByteArray ba (n :: Nat) = SizedByteArray { unSizedByteArray :: ba }
 --
 sizedByteArray :: forall n ba . (KnownNat n, ByteArrayAccess ba)
                => ba
-               -> Maybe (SizedByteArray ba n)
+               -> Maybe (SizedByteArray n ba)
 sizedByteArray ba
     | length ba == n = Just $ SizedByteArray ba
     | otherwise      = Nothing
@@ -110,14 +113,14 @@ sizedByteArray ba
 
 -- | just like the 'sizedByteArray' function but throw an exception if
 -- the size is invalid.
-unsafeSizedByteArray :: forall n ba . (ByteArrayAccess ba, KnownNat n) => ba -> SizedByteArray ba n
+unsafeSizedByteArray :: forall n ba . (ByteArrayAccess ba, KnownNat n) => ba -> SizedByteArray n ba
 unsafeSizedByteArray = fromMaybe (error "The size is invalid") . sizedByteArray
 
-instance (ByteArrayAccess ba, KnownNat n) => ByteArrayAccess (SizedByteArray ba n) where
+instance (ByteArrayAccess ba, KnownNat n) => ByteArrayAccess (SizedByteArray n ba) where
     length _ = fromInteger $ natVal (Proxy @n)
     withByteArray (SizedByteArray ba) = withByteArray ba
 
-instance ByteArray ba => ByteArrayN (SizedByteArray ba) where
+instance (KnownNat n, ByteArray ba) => ByteArrayN n (SizedByteArray n ba) where
     allocRet p f = do
         (a, ba) <- ByteArray.allocRet n f
         pure (a, SizedByteArray ba)
@@ -125,8 +128,12 @@ instance ByteArray ba => ByteArrayN (SizedByteArray ba) where
         n = fromInteger $ natVal p
 
 #if MIN_VERSION_basement(0,0,7)
-instance (ByteArrayAccess (BlockN n Word8), KnownNat n, Countable Word8 n, Base.PrimType Word8) => ByteArrayN (BlockN n Word8) where
-    type LengthN (BlockN n Word8) = n
+instance ( ByteArrayAccess (BlockN n ty)
+         , PrimType ty
+         , KnownNat n
+         , Countable ty n
+         , Base.PrimType Word8
+         ) => ByteArrayN n (BlockN n ty) where
     allocRet _ f = do
         mba <- BlockN.new @n
         a   <- BlockN.withMutablePtrHint True False mba (f . castPtr)
@@ -136,41 +143,41 @@ instance (ByteArrayAccess (BlockN n Word8), KnownNat n, Countable Word8 n, Base.
 
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
-alloc :: forall n ba p . (ByteArrayN ba, KnownNat n)
+alloc :: forall n ba p . (ByteArrayN n ba, KnownNat n)
       => (Ptr p -> IO ())
-      -> IO (ba n)
+      -> IO ba
 alloc f = snd <$> allocRet (Proxy @n) f
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
-create :: forall n ba p . (ByteArrayN ba, KnownNat n)
+create :: forall n ba p . (ByteArrayN n ba, KnownNat n)
        => (Ptr p -> IO ())
-       -> IO (ba n)
+       -> IO ba
 create = alloc @n
 {-# NOINLINE create #-}
 
 -- | similar to 'allocN' but hide the allocation and initializer in a pure context
-allocAndFreeze :: forall n ba p . (ByteArrayN ba, KnownNat n)
-               => (Ptr p -> IO ()) -> ba n
+allocAndFreeze :: forall n ba p . (ByteArrayN n ba, KnownNat n)
+               => (Ptr p -> IO ()) -> ba
 allocAndFreeze f = unsafeDoIO (alloc @n f)
 {-# NOINLINE allocAndFreeze #-}
 
 -- | similar to 'createN' but hide the allocation and initializer in a pure context
-unsafeCreate :: forall n ba p . (ByteArrayN ba, KnownNat n)
-             => (Ptr p -> IO ()) -> ba n
+unsafeCreate :: forall n ba p . (ByteArrayN n ba, KnownNat n)
+             => (Ptr p -> IO ()) -> ba
 unsafeCreate f = unsafeDoIO (alloc @n f)
 {-# NOINLINE unsafeCreate #-}
 
-inlineUnsafeCreate :: forall n ba p . (ByteArrayN ba, KnownNat n)
-                   => (Ptr p -> IO ()) -> ba n
+inlineUnsafeCreate :: forall n ba p . (ByteArrayN n ba, KnownNat n)
+                   => (Ptr p -> IO ()) -> ba
 inlineUnsafeCreate f = unsafeDoIO (alloc @n f)
 {-# INLINE inlineUnsafeCreate #-}
 
 -- | Create an empty byte array
-empty :: forall ba . ByteArrayN ba => ba 0
+empty :: forall ba . ByteArrayN 0 ba => ba
 empty = unsafeDoIO (alloc @0 $ \_ -> return ())
 
 -- | Pack a list of bytes into a bytearray
-pack :: forall n ba . (ByteArrayN ba, KnownNat n) => ListN n Word8 -> ba n
+pack :: forall n ba . (ByteArrayN n ba, KnownNat n) => ListN n Word8 -> ba
 pack l = inlineUnsafeCreate @n (fill $ unListN l)
   where fill []     _  = return ()
         fill (x:xs) !p = poke p x >> fill xs (p `plusPtr` 1)
@@ -179,8 +186,8 @@ pack l = inlineUnsafeCreate @n (fill $ unListN l)
 
 -- | Un-pack a bytearray into a list of bytes
 unpack :: forall n ba
-        . (ByteArrayN ba, KnownNat n, NatWithinBound Int n, ByteArrayAccess (ba n))
-       => ba n -> ListN n Word8
+        . (ByteArrayN n ba, KnownNat n, NatWithinBound Int n, ByteArrayAccess ba)
+       => ba -> ListN n Word8
 unpack bs =  fromMaybe (error "the impossible appened") $ toListN @n $ loop 0
   where !len = length bs
         loop i
@@ -191,11 +198,11 @@ unpack bs =  fromMaybe (error "the impossible appened") $ toListN @n $ loop 0
 
 -- | prepend a single byte to a byte array
 cons :: forall ni no bi bo
-      . ( ByteArrayN bi, ByteArrayN bo, ByteArrayAccess (bi ni)
+      . ( ByteArrayN ni bi, ByteArrayN no bo, ByteArrayAccess bi
         , KnownNat ni, KnownNat no
         , (ni + 1) ~ no
         )
-     => Word8 -> bi ni -> bo no
+     => Word8 -> bi -> bo
 cons b ba = unsafeCreate @no $ \d -> withByteArray ba $ \s -> do
     pokeByteOff d 0 b
     memCopy (d `plusPtr` 1) s len
@@ -204,11 +211,11 @@ cons b ba = unsafeCreate @no $ \d -> withByteArray ba $ \s -> do
 
 -- | append a single byte to a byte array
 snoc :: forall bi bo ni no
-      . ( ByteArrayN bi, ByteArrayN bo, ByteArrayAccess (bi ni)
+      . ( ByteArrayN ni bi, ByteArrayN no bo, ByteArrayAccess bi
         , KnownNat ni, KnownNat no
         , (ni + 1) ~ no
         )
-     => bi ni -> Word8 -> bo no
+     => bi -> Word8 -> bo
 snoc ba b = unsafeCreate @no $ \d -> withByteArray ba $ \s -> do
     memCopy d s len
     pokeByteOff d len b
@@ -219,11 +226,11 @@ snoc ba b = unsafeCreate @no $ \d -> withByteArray ba $ \s -> do
 --
 -- the returns byte array is the size of the smallest input.
 xor :: forall n a b c
-     . ( ByteArrayN a, ByteArrayN b, ByteArrayN c
-       , ByteArrayAccess (a n), ByteArrayAccess (b n)
+     . ( ByteArrayN n a, ByteArrayN n b, ByteArrayN n c
+       , ByteArrayAccess a, ByteArrayAccess b
        , KnownNat n
        )
-    => a n -> b n -> c n
+    => a -> b -> c
 xor a b =
     unsafeCreate @n $ \pc ->
     withByteArray a  $ \pa ->
@@ -238,23 +245,23 @@ xor a b =
 --
 -- unsafe, no bound checking are done
 index :: forall n na ba
-       . ( ByteArrayN ba, ByteArrayAccess (ba na)
+       . ( ByteArrayN na ba, ByteArrayAccess ba
          , KnownNat na, KnownNat n
          , n <= na
          )
-      => ba na -> Proxy n -> Word8
+      => ba -> Proxy n -> Word8
 index b pi = unsafeDoIO $ withByteArray b $ \p -> peek (p `plusPtr` i)
   where
     i = fromInteger $ natVal pi
 
 -- | Split a bytearray at a specific length in two bytearray
 splitAt :: forall nblhs nbi nbrhs bi blhs brhs
-         . ( ByteArrayN bi, ByteArrayN blhs, ByteArrayN brhs
-           , ByteArrayAccess (bi nbi)
+         . ( ByteArrayN nbi bi, ByteArrayN nblhs blhs, ByteArrayN nbrhs brhs
+           , ByteArrayAccess bi
            , KnownNat nbi, KnownNat nblhs, KnownNat nbrhs
            , nblhs <= nbi, (nbrhs + nblhs) ~ nbi
            )
-        => bi nbi -> (blhs nblhs, brhs nbrhs)
+        => bi -> (blhs, brhs)
 splitAt bs = unsafeDoIO $
     withByteArray bs $ \p -> do
         b1 <- alloc @nblhs $ \r -> memCopy r p n
@@ -266,12 +273,12 @@ splitAt bs = unsafeDoIO $
 
 -- | Take the first @n@ byte of a bytearray
 take :: forall nbo nbi bi bo
-      . ( ByteArrayN bi, ByteArrayN bo
-        , ByteArrayAccess (bi nbi)
+      . ( ByteArrayN nbi bi, ByteArrayN nbo bo
+        , ByteArrayAccess bi
         , KnownNat nbi, KnownNat nbo
         , nbo <= nbi
         )
-     => bi nbi -> bo nbo
+     => bi -> bo
 take bs = unsafeCreate @nbo $ \d -> withByteArray bs $ \s -> memCopy d s m
   where
     !m   = min len n
@@ -280,12 +287,12 @@ take bs = unsafeCreate @nbo $ \d -> withByteArray bs $ \s -> memCopy d s m
 
 -- | drop the first @n@ byte of a bytearray
 drop :: forall n nbi nbo bi bo
-      . ( ByteArrayN bi, ByteArrayN bo
-        , ByteArrayAccess (bi nbi)
+      . ( ByteArrayN nbi bi, ByteArrayN nbo bo
+        , ByteArrayAccess bi
         , KnownNat n, KnownNat nbi, KnownNat nbo
         , (nbo + n) ~ nbi
         )
-     => Proxy n -> bi nbi -> bo nbo
+     => Proxy n -> bi -> bo
 drop pn bs = unsafeCreate @nbo $ \d ->
     withByteArray bs $ \s ->
     memCopy d (s `plusPtr` ofs) nb
@@ -297,12 +304,12 @@ drop pn bs = unsafeCreate @nbo $ \d ->
 
 -- | append one bytearray to the other
 append :: forall nblhs nbrhs nbout blhs brhs bout
-        . ( ByteArrayN blhs, ByteArrayN brhs, ByteArrayN bout
-          , ByteArrayAccess (blhs nblhs), ByteArrayAccess (brhs nbrhs)
+        . ( ByteArrayN nblhs blhs, ByteArrayN nbrhs brhs, ByteArrayN nbout bout
+          , ByteArrayAccess blhs, ByteArrayAccess brhs
           , KnownNat nblhs, KnownNat nbrhs, KnownNat nbout
           , (nbrhs + nblhs) ~ nbout
           )
-       => blhs nblhs -> brhs nbrhs -> bout nbout
+       => blhs -> brhs -> bout
 append blhs brhs = unsafeCreate @nbout $ \p ->
     withByteArray blhs $ \plhs ->
     withByteArray brhs $ \prhs -> do
@@ -311,22 +318,22 @@ append blhs brhs = unsafeCreate @nbout $ \p ->
 
 -- | Duplicate a bytearray into another bytearray, and run an initializer on it
 copy :: forall n bs1 bs2 p
-      . ( ByteArrayN bs1, ByteArrayN bs2
-        , ByteArrayAccess (bs1 n)
+      . ( ByteArrayN n bs1, ByteArrayN n bs2
+        , ByteArrayAccess bs1
         , KnownNat n
         )
-     => bs1 n -> (Ptr p -> IO ()) -> IO (bs2 n)
+     => bs1 -> (Ptr p -> IO ()) -> IO bs2
 copy bs f = alloc @n $ \d -> do
     withByteArray bs $ \s -> memCopy d s (length bs)
     f (castPtr d)
 
 -- | Similar to 'copy' but also provide a way to return a value from the initializer
 copyRet :: forall n bs1 bs2 p a
-         . ( ByteArrayN bs1, ByteArrayN bs2
-           , ByteArrayAccess (bs1 n)
+         . ( ByteArrayN n bs1, ByteArrayN n bs2
+           , ByteArrayAccess bs1
            , KnownNat n
            )
-        => bs1 n -> (Ptr p -> IO a) -> IO (a, bs2 n)
+        => bs1 -> (Ptr p -> IO a) -> IO (a, bs2)
 copyRet bs f =
     allocRet (Proxy @n) $ \d -> do
         withByteArray bs $ \s -> memCopy d s (length bs)
@@ -334,11 +341,11 @@ copyRet bs f =
 
 -- | Similiar to 'copy' but expect the resulting bytearray in a pure context
 copyAndFreeze :: forall n bs1 bs2 p
-               . ( ByteArrayN bs1, ByteArrayN bs2
-                 , ByteArrayAccess (bs1 n)
+               . ( ByteArrayN n bs1, ByteArrayN n bs2
+                 , ByteArrayAccess bs1
                  , KnownNat n
                  )
-              => bs1 n -> (Ptr p -> IO ()) -> bs2 n
+              => bs1 -> (Ptr p -> IO ()) -> bs2
 copyAndFreeze bs f =
     inlineUnsafeCreate @n $ \d -> do
         copyByteArrayToPtr bs d
@@ -346,21 +353,21 @@ copyAndFreeze bs f =
 {-# NOINLINE copyAndFreeze #-}
 
 -- | Create a bytearray of a specific size containing a repeated byte value
-replicate :: forall n ba . (ByteArrayN ba, KnownNat n)
-          => Word8 -> ba n
+replicate :: forall n ba . (ByteArrayN n ba, KnownNat n)
+          => Word8 -> ba
 replicate b = inlineUnsafeCreate @n $ \ptr -> memSet ptr b (fromInteger $ natVal $ Proxy @n)
 {-# NOINLINE replicate #-}
 
 -- | Create a bytearray of a specific size initialized to 0
-zero :: forall n ba . (ByteArrayN ba, KnownNat n) => ba n
+zero :: forall n ba . (ByteArrayN n ba, KnownNat n) => ba
 zero = unsafeCreate @n $ \ptr -> memSet ptr 0 (fromInteger $ natVal $ Proxy @n)
 {-# NOINLINE zero #-}
 
 -- | Convert a bytearray to another type of bytearray
 convert :: forall n bin bout
-         . ( ByteArrayN bin, ByteArrayN bout
-           , ByteArrayAccess (bin n)
+         . ( ByteArrayN n bin, ByteArrayN n bout
+           , ByteArrayAccess bin
            , KnownNat n
            )
-        => bin n -> bout n
+        => bin -> bout
 convert bs = inlineUnsafeCreate @n (copyByteArrayToPtr bs)
