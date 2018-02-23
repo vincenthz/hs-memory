@@ -51,6 +51,8 @@ module Data.ByteArray.Sized
     , replicate
     , zero
     , convert
+    , fromByteArrayAccess
+    , unsafeFromByteArrayAccess
     ) where
 
 import Basement.Imports
@@ -362,8 +364,32 @@ zero = unsafeCreate @n $ \ptr -> memSet ptr 0 (fromInteger $ natVal $ Proxy @n)
 -- | Convert a bytearray to another type of bytearray
 convert :: forall n bin bout
          . ( ByteArrayN n bin, ByteArrayN n bout
-           , ByteArrayAccess bin
            , KnownNat n
            )
         => bin -> bout
 convert bs = inlineUnsafeCreate @n (copyByteArrayToPtr bs)
+
+-- | Convert a ByteArrayAccess to another type of bytearray
+--
+-- This function returns nothing if the size is not compatible
+fromByteArrayAccess :: forall n bin bout
+                     . ( ByteArrayAccess bin, ByteArrayN n bout
+                       , KnownNat n
+                       )
+                    => bin -> Maybe bout
+fromByteArrayAccess bs
+    | l == n    = Just $ inlineUnsafeCreate @n (copyByteArrayToPtr bs)
+    | otherwise = Nothing
+  where
+    l = length bs
+    n = fromInteger $ natVal (Proxy @n)
+
+-- | Convert a ByteArrayAccess to another type of bytearray
+unsafeFromByteArrayAccess :: forall n bin bout
+                           . ( ByteArrayAccess bin, ByteArrayN n bout
+                             , KnownNat n
+                           )
+                          => bin -> bout
+unsafeFromByteArrayAccess bs = case fromByteArrayAccess @n @bin @bout bs of
+    Nothing -> error "Invalid Size"
+    Just v  -> v
