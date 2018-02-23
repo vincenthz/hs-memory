@@ -20,6 +20,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module Data.ByteArray.Sized
     ( ByteArrayN(..)
@@ -130,8 +131,10 @@ instance ( ByteArrayAccess (BlockN n ty)
          , PrimType ty
          , KnownNat n
          , Countable ty n
+         , KnownNat nbytes
+         , nbytes ~ (Base.PrimSize ty * n)
          , Base.PrimType Word8
-         ) => ByteArrayN n (BlockN n ty) where
+         ) => ByteArrayN nbytes (BlockN n ty) where
     allocRet _ f = do
         mba <- BlockN.new @n
         a   <- BlockN.withMutablePtrHint True False mba (f . castPtr)
