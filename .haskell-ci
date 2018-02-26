@@ -16,7 +16,7 @@ build: ghc-8.0
 build: ghc-8.0 os=osx
 build: ghc-8.2
 build: ghc-8.2-sized extradep=foundation-0.0.20 extradep=basement-0.0.7
-build: ghc-8.4 extradep=foundation-0.0.20 extradep=basement-0.0.7 tests=no benchs=no
+build: ghc-8.4 extradep=foundation-0.0.20 extradep=basement-0.0.7 benchs=no
 
 # packages
 package: '.'
