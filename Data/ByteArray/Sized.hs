@@ -237,9 +237,7 @@ xor a b =
     withByteArray b  $ \pb ->
         memXor pc pa pb n
   where
-        n  = min la lb
-        la = length a
-        lb = length b
+    n  = fromInteger (natVal (Proxy @n))
 
 -- | return a specific byte indexed by a number from 0 in a bytearray
 --
