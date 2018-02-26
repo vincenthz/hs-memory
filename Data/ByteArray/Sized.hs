@@ -133,7 +133,6 @@ instance ( ByteArrayAccess (BlockN n ty)
          , Countable ty n
          , KnownNat nbytes
          , nbytes ~ (Base.PrimSize ty * n)
-         , Base.PrimType Word8
          ) => ByteArrayN nbytes (BlockN n ty) where
     allocRet _ f = do
         mba <- BlockN.new @n
