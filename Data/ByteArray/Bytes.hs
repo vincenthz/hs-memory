@@ -32,6 +32,10 @@ import           Data.Memory.Internal.Compat      (unsafeDoIO)
 import           Data.ByteArray.Types
 import           Data.Typeable
 
+#ifdef MIN_VERSION_basement
+import           Basement.NormalForm
+#endif
+
 -- | Simplest Byte Array
 data Bytes = Bytes (MutableByteArray# RealWorld)
   deriving (Typeable)
@@ -55,6 +59,10 @@ instance Monoid Bytes where
 #endif
 instance NFData Bytes where
     rnf b = b `seq` ()
+#ifdef MIN_VERSION_basement
+instance NormalForm Bytes where
+    toNormalForm b = b `seq` ()
+#endif
 instance ByteArrayAccess Bytes where
     length        = bytesLength
     withByteArray = withBytes

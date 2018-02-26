@@ -32,6 +32,9 @@ import           Data.Memory.Internal.Imports
 import           Data.Memory.Internal.Scrubber   (getScrubber)
 import           Data.ByteArray.Types
 import           Foreign.Storable
+#ifdef MIN_VERSION_basement
+import           Basement.NormalForm
+#endif
 
 -- | ScrubbedBytes is a memory chunk which have the properties of:
 --
@@ -64,6 +67,10 @@ instance Monoid ScrubbedBytes where
 #endif
 instance NFData ScrubbedBytes where
     rnf b = b `seq` ()
+#ifdef MIN_VERSION_basement
+instance NormalForm ScrubbedBytes where
+    toNormalForm b = b `seq` ()
+#endif
 instance IsString ScrubbedBytes where
     fromString = scrubbedFromChar8
 
