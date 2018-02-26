@@ -117,6 +117,7 @@ instance Base.PrimType ty => ByteArrayAccess (Block.Block ty) where
 instance (KnownNat n, Base.PrimType ty, Base.Countable ty n) => ByteArrayAccess (BlockN.BlockN n ty) where
     length a = let Base.CountOf i = BlockN.lengthBytes a in i
     withByteArray a f = BlockN.withPtr a (f . castPtr)
+    copyByteArrayToPtr bna = copyByteArrayToPtr (BlockN.toBlock bna)
 #endif
 
 baseUarrayRecastW8 :: Base.PrimType ty => Base.UArray ty -> Base.UArray Word8
