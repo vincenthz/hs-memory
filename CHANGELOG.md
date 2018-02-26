@@ -1,3 +1,11 @@
+## 0.14.15
+
+* Convert tests to foundation checks
+* Convert CI to haskell-ci
+* Fix compilation without foundation
+* Introduce ByteArrayL and associated method, as a type level sized version of ByteArray
+* Add NormalForm for Bytes and ScrubbedBytes
+
 ## 0.14.14
 
 * Fix bounds issues with empty strings in base64 and base32
