@@ -36,6 +36,14 @@ import           Data.Memory.PtrMethods (memCopy)
 # define LEGACY_FOUNDATION_SUPPORT
 #endif
 
+#if MIN_VERSION_basement(0,0,5)
+# define SUPPORT_BLOCK
+#endif
+
+#if MIN_VERSION_basement(0,0,7) && __GLASGOW_HASKELL__ >= 800 && defined(SUPPORT_BLOCK)
+# define SUPPORT_BLOCKN
+#endif
+
 import           Data.Proxy (Proxy(..))
 import           Data.Word (Word8)
 
@@ -44,12 +52,13 @@ import qualified Basement.UArray as Base
 import qualified Basement.String as Base (String, toBytes, Encoding(UTF8))
 import qualified Basement.PrimType as Base (primSizeInBytes)
 
-#if MIN_VERSION_basement(0,0,5)
-import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint, copyToPtr)
+#ifdef SUPPORT_BLOCK
+import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint)
 import qualified Basement.Block as Block
 import qualified Basement.Block.Mutable as Block
 #endif
-#if MIN_VERSION_basement(0,0,7) && __GLASGOW_HASKELL__ >= 800
+
+#ifdef SUPPORT_BLOCKN
 import           Basement.Nat
 import qualified Basement.Sized.Block as BlockN
 #endif
@@ -113,7 +122,7 @@ instance Base.PrimType ty => ByteArrayAccess (Block.Block ty) where
         Block.copyToPtr mb 0 (castPtr dst) (Block.length $ baseBlockRecastW8 ba)
 #endif
 
-#if MIN_VERSION_basement(0,0,7)
+#ifdef SUPPORT_BLOCKN
 instance (KnownNat n, Base.PrimType ty, Base.Countable ty n) => ByteArrayAccess (BlockN.BlockN n ty) where
     length a = let Base.CountOf i = BlockN.lengthBytes a in i
     withByteArray a f = BlockN.withPtr a (f . castPtr)
@@ -139,7 +148,7 @@ instance ByteArrayAccess Base.String where
         bytes = Base.toBytes Base.UTF8 str
     withByteArray s f = withByteArray (Base.toBytes Base.UTF8 s) f
 
-#if MIN_VERSION_basement(0,0,5)
+#ifdef SUPPORT_BLOCK
 instance (Ord ty, Base.PrimType ty) => ByteArray (Block.Block ty) where
     allocRet sz f = do
         mba <- Block.new $ sizeRecastBytes sz Proxy
