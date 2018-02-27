@@ -49,9 +49,9 @@ import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint, cop
 import qualified Basement.Block as Block
 import qualified Basement.Block.Mutable as Block
 #endif
-#if MIN_VERSION_basement(0,0,7)
+#if MIN_VERSION_basement(0,0,7) && __GLASGOW_HASKELL__ >= 800
 import           Basement.Nat
-import qualified Basement.BlockN as BlockN
+import qualified Basement.Sized.Block as BlockN
 #endif
 
 #ifdef LEGACY_FOUNDATION_SUPPORT
