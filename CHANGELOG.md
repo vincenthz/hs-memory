@@ -1,3 +1,7 @@
+## 0.14.16
+
+* Fix compilation with a newer basement (>= 0.0.7) and an older GHC (< 8.0)
+
 ## 0.14.15
 
 * Convert tests to foundation checks
