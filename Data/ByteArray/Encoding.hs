@@ -5,7 +5,7 @@
 -- Stability   : experimental
 -- Portability : unknown
 --
--- ByteArray base converting
+-- Base conversions for 'ByteArray'.
 --
 module Data.ByteArray.Encoding
     ( convertToBase
@@ -21,13 +21,35 @@ import           Data.Memory.Encoding.Base16
 import           Data.Memory.Encoding.Base32
 import           Data.Memory.Encoding.Base64
 
--- | Different bases that can be used
+-- $setup
+-- >>> :set -XOverloadedStrings
+-- >>> import Data.ByteString
+
+-- | The different bases that can be used.
 --
 -- See <http://tools.ietf.org/html/rfc4648 RFC4648> for details.
 -- In particular, Base64 can be standard or
 -- <http://tools.ietf.org/html/rfc4648#section-5 URL-safe>. URL-safe
 -- encoding is often used in other specifications without
 -- <http://tools.ietf.org/html/rfc4648#section-3.2 padding> characters.
+--
+-- ==== Examples
+--
+-- A quick example to show the differences:
+--
+-- >>> let input = "Is 3 > 2?" :: ByteString
+-- >>> let convertedTo base = convertToBase base input :: ByteString
+-- >>> convertedTo Base16
+-- "49732033203e20323f"
+-- >>> convertedTo Base32
+-- "JFZSAMZAHYQDEPY="
+-- >>> convertedTo Base64
+-- "SXMgMyA+IDI/"
+-- >>> convertedTo Base64URLUnpadded
+-- "SXMgMyA-IDI_"
+-- >>> convertedTo Base64OpenBSD
+-- "QVKeKw.8GBG9"
+--
 data Base = Base16            -- ^ similar to hexadecimal
           | Base32
           | Base64            -- ^ standard Base64
@@ -35,7 +57,15 @@ data Base = Base16            -- ^ similar to hexadecimal
           | Base64OpenBSD     -- ^ Base64 as used in OpenBSD password encoding (such as bcrypt)
           deriving (Show,Eq)
 
--- | Convert a bytearray to the equivalent representation in a specific Base
+-- | Encode some bytes to the equivalent representation in a specific 'Base'.
+--
+-- ==== Examples
+--
+-- Convert a 'ByteString' to base-64:
+--
+-- >>> convertToBase Base64 ("foobar" :: ByteString) :: ByteString
+-- "Zm9vYmFy"
+--
 convertToBase :: (ByteArrayAccess bin, ByteArray bout) => Base -> bin -> bout
 convertToBase base b = case base of
     Base16 -> doConvert (binLength * 2) toHexadecimal
@@ -59,7 +89,20 @@ convertToBase base b = case base of
         B.withByteArray b     $ \bin  ->
             f bout bin binLength
 
--- | Try to Convert a bytearray from the equivalent representation in a specific Base
+-- | Try to decode some bytes from the equivalent representation in a specific 'Base'.
+--
+-- ==== Examples
+--
+-- Successfully convert from base-64 to a 'ByteString':
+--
+-- >>> convertFromBase Base64 ("Zm9vYmFy" :: ByteString) :: Either String ByteString
+-- Right "foobar"
+--
+-- Trying to decode invalid data will return an error string:
+--
+-- >>> convertFromBase Base64 ("!!!" :: ByteString) :: Either String ByteString
+-- Left "base64: input: invalid length"
+--
 convertFromBase :: (ByteArrayAccess bin, ByteArray bout) => Base -> bin -> Either String bout
 convertFromBase Base16 b
     | odd (B.length b) = Left "base16: input: invalid length"
