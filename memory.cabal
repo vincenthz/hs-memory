@@ -121,13 +121,13 @@ Test-Suite test-memory
   if flag(support_foundation)
     CPP-options:     -DWITH_FOUNDATION_SUPPORT
 
-Test-Suite test-examples
-  default-language:  Haskell2010
-  type:              exitcode-stdio-1.0
-  hs-source-dirs:    tests
-  ghc-options:       -threaded
-  Main-is:           DocTests.hs
-  Build-Depends:     base >= 3 && < 5
-                   , memory
-                   , bytestring
-                   , doctest
+-- Test-Suite test-examples
+--   default-language:  Haskell2010
+--   type:              exitcode-stdio-1.0
+--   hs-source-dirs:    tests
+--   ghc-options:       -threaded
+--   Main-is:           DocTests.hs
+--   Build-Depends:     base >= 3 && < 5
+--                    , memory
+--                    , bytestring
+--                    , doctest
