@@ -211,7 +211,7 @@ concat l = unsafeCreate retLen (loopCopy l)
 
     loopCopy []     _   = return ()
     loopCopy (x:xs) dst = do
-        withByteArray x $ \src -> memCopy dst src chunkLen
+        copyByteArrayToPtr x dst
         loopCopy xs (dst `plusPtr` chunkLen)
       where
         !chunkLen = length x
@@ -224,14 +224,14 @@ append = mappend
 copy :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> IO bs2
 copy bs f =
     alloc (length bs) $ \d -> do
-        withByteArray bs $ \s -> memCopy d s (length bs)
+        copyByteArrayToPtr bs d
         f (castPtr d)
 
 -- | Similar to 'copy' but also provide a way to return a value from the initializer
 copyRet :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO a) -> IO (a, bs2)
 copyRet bs f =
     allocRet (length bs) $ \d -> do
-        withByteArray bs $ \s -> memCopy d s (length bs)
+        copyByteArrayToPtr bs d
         f (castPtr d)
 
 -- | Similiar to 'copy' but expect the resulting bytearray in a pure context
