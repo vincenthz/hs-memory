@@ -251,11 +251,12 @@ main = defaultMain $ Group "memory"
             let chunks   = fmap (witnessID . B.pack . unWords8) l
                 expected = concatMap unWords8 l
              in B.pack expected == witnessID (B.concat chunks)
-        , Property "cons b bs == reverse (snoc (reverse bs) b)" $ \(Words8 l) b ->
-            let b1 = witnessID (B.pack l)
-                b2 = witnessID (B.pack (reverse l))
-                expected = B.pack (reverse (B.unpack (B.snoc b2 b)))
-             in B.cons b b1 == expected
+        , Property "reverse" $ \(Words8 l) ->
+            let b = witnessID (B.pack l)
+             in reverse l == B.unpack (B.reverse b)
+        , Property "cons b (reverse bs) == reverse (snoc bs b)" $ \(Words8 l) b ->
+            let a = witnessID (B.pack l)
+             in B.cons b (B.reverse a) == B.reverse (B.snoc a b)
         , Property "all == Prelude.all" $ \(Words8 l) b ->
             let b1 = witnessID (B.pack l)
                 p  = (/= b)

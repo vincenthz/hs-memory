@@ -26,6 +26,7 @@ module Data.ByteArray.Methods
     , take
     , drop
     , span
+    , reverse
     , convert
     , copyRet
     , copyAndFreeze
@@ -48,7 +49,7 @@ import           Data.Monoid
 import           Foreign.Storable
 import           Foreign.Ptr
 
-import           Prelude hiding (length, take, drop, span, concat, replicate, splitAt, null, pred, last, any, all)
+import           Prelude hiding (length, take, drop, span, reverse, concat, replicate, splitAt, null, pred, last, any, all)
 import qualified Prelude
 
 #if defined(WITH_BYTESTRING_SUPPORT) && defined(WITH_FOUNDATION_SUPPORT)
@@ -196,6 +197,11 @@ span pred bs
             | pred (index bs i) = loop (i+1)
             | otherwise         = i
         len = length bs
+
+-- | Reverse a bytearray
+reverse :: ByteArray bs => bs -> bs
+reverse bs = unsafeCreate n $ \d -> withByteArray bs $ \s -> memReverse d s n
+  where n = length bs
 
 -- | Concatenate bytearray into a larger bytearray
 concat :: (ByteArrayAccess bin, ByteArray bout) => [bin] -> bout

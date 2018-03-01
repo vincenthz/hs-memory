@@ -17,6 +17,7 @@ module Data.Memory.PtrMethods
     , memXorWith
     , memCopy
     , memSet
+    , memReverse
     , memEqual
     , memConstEqual
     , memCompare
@@ -71,6 +72,14 @@ memCopy dst src n = c_memcpy dst src (fromIntegral n)
 memSet :: Ptr Word8 -> Word8 -> Int -> IO ()
 memSet start v n = c_memset start v (fromIntegral n) >>= \_ -> return ()
 {-# INLINE memSet #-}
+
+-- | Reverse a set number of bytes from @src@ to @dst@.  Memory
+-- locations should not overlap.
+memReverse :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
+memReverse d s n
+    | n > 0 = do peekByteOff s (n - 1) >>= poke d
+                 memReverse (d `plusPtr` 1) s (n - 1)
+    | otherwise = return ()
 
 -- | Check if two piece of memory are equals
 memEqual :: Ptr Word8 -> Ptr Word8 -> Int -> IO Bool
