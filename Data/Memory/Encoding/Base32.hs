@@ -5,7 +5,10 @@
 -- Stability   : experimental
 -- Portability : unknown
 --
--- Base32
+-- Low-level Base32 encoding and decoding.
+--
+-- If you just want to encode or decode some bytes, you probably want to use
+-- the "Data.ByteArray.Encoding" module.
 --
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}

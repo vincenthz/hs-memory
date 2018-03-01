@@ -5,7 +5,10 @@
 -- Stability   : experimental
 -- Portability : unknown
 --
--- Hexadecimal escaper
+-- Low-level Base16 encoding and decoding.
+--
+-- If you just want to encode or decode some bytes, you probably want to use
+-- the "Data.ByteArray.Encoding" module.
 --
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
