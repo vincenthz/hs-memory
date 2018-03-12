@@ -37,24 +37,4 @@ The coding style of this project mostly follows:
 Support
 -------
 
-Memory supports the following platform:
-
-* Windows >= 7
-* OSX >= 10.8
-* Linux
-
-On the following architectures:
-
-* x86-64
-* i386
-
-On the following haskell versions:
-
-* GHC 7.10
-* GHC 8.0
-* GHC 8.2
-
-Some older versions or different systems are possibly working too
-
-
-
+See [Haskell packages guidelines](https://github.com/vincenthz/haskell-pkg-guidelines/blob/master/README.md#support)
