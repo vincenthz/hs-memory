@@ -7,6 +7,7 @@
 --
 -- methods to manipulate raw memory representation
 --
+{-# LANGUAGE CApiFFI #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -106,8 +107,8 @@ memConstEqual p1 p2 n = loop 0 0
             e <- xor <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
             loop (i+1) (acc .|. e)
 
-foreign import ccall unsafe "memset"
+foreign import capi "string.h memset"
     c_memset :: Ptr Word8 -> Word8 -> CSize -> IO ()
 
-foreign import ccall unsafe "memcpy"
+foreign import capi "string.h memcpy"
     c_memcpy :: Ptr Word8 -> Ptr Word8 -> CSize -> IO ()
