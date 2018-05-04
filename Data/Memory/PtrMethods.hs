@@ -7,7 +7,6 @@
 --
 -- methods to manipulate raw memory representation
 --
-{-# LANGUAGE CApiFFI #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE MagicHash #-}
 {-# LANGUAGE UnboxedTuples #-}
@@ -29,6 +28,7 @@ import           Foreign.Storable         (peek, poke, peekByteOff)
 import           Foreign.C.Types
 import           Foreign.Marshal.Alloc    (allocaBytesAligned)
 import           Data.Bits                ((.|.), xor)
+import           Data.ByteString.Internal (memset, memcpy)
 
 -- | Create a new temporary buffer
 memCreateTemporary :: Int -> (Ptr Word8 -> IO a) -> IO a
@@ -65,12 +65,12 @@ memXorWith destination !v source bytes
 
 -- | Copy a set number of bytes from @src to @dst
 memCopy :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
-memCopy dst src n = c_memcpy dst src (fromIntegral n)
+memCopy = memcpy
 {-# INLINE memCopy #-}
 
 -- | Set @n number of bytes to the same value @v
 memSet :: Ptr Word8 -> Word8 -> Int -> IO ()
-memSet start v n = c_memset start v (fromIntegral n) >>= \_ -> return ()
+memSet start v n = memset start v (fromIntegral n) >> return ()
 {-# INLINE memSet #-}
 
 -- | Check if two piece of memory are equals
@@ -106,9 +106,3 @@ memConstEqual p1 p2 n = loop 0 0
         | otherwise = do
             e <- xor <$> peekByteOff p1 i <*> (peekByteOff p2 i :: IO Word8)
             loop (i+1) (acc .|. e)
-
-foreign import capi "string.h memset"
-    c_memset :: Ptr Word8 -> Word8 -> CSize -> IO ()
-
-foreign import capi "string.h memcpy"
-    c_memcpy :: Ptr Word8 -> Ptr Word8 -> CSize -> IO ()
