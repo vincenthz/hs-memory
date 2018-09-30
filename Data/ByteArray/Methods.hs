@@ -52,12 +52,10 @@ import           Foreign.Ptr
 import           Prelude hiding (length, take, drop, span, reverse, concat, replicate, splitAt, null, pred, last, any, all)
 import qualified Prelude
 
-#if defined(WITH_BYTESTRING_SUPPORT) && defined(WITH_FOUNDATION_SUPPORT)
+#if defined(WITH_BYTESTRING_SUPPORT) && defined(WITH_BASEMENT_SUPPORT)
 import qualified Data.ByteString as SPE (ByteString)
 import qualified Basement.UArray as SPE (UArray)
-#if MIN_VERSION_basement(0,0,5)
 import qualified Basement.Block  as SPE (Block)
-#endif
 #endif
 
 -- | Allocate a new bytearray of specific size, and run the initializer on this memory
@@ -306,11 +304,9 @@ all f b = not (any (not . f) b)
 -- | Convert a bytearray to another type of bytearray
 convert :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout
 convert bs = inlineUnsafeCreate (length bs) (copyByteArrayToPtr bs)
-#if defined(WITH_BYTESTRING_SUPPORT) && defined(WITH_FOUNDATION_SUPPORT)
+#if defined(WITH_BYTESTRING_SUPPORT) && defined(WITH_BASEMENT_SUPPORT)
 {-# SPECIALIZE convert :: SPE.ByteString -> SPE.UArray Word8 #-}
 {-# SPECIALIZE convert :: SPE.UArray Word8 -> SPE.ByteString #-}
-#if MIN_VERSION_basement(0,0,5)
 {-# SPECIALIZE convert :: SPE.ByteString -> SPE.Block Word8 #-}
 {-# SPECIALIZE convert :: SPE.Block Word8 -> SPE.ByteString #-}
-#endif
 #endif
