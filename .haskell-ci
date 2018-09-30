@@ -7,7 +7,7 @@ compiler: ghc-8.4 lts-12.11
 # option: alias x=y z=v
 
 # builds 
-build: ghc-8.0
+build: ghc-8.0 extradep=basement-0.0.8
 build: ghc-8.2
 build: ghc-8.4 os=linux,win,osx
 
