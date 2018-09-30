@@ -26,6 +26,7 @@ module Data.ByteArray.Methods
     , take
     , drop
     , span
+    , reverse
     , convert
     , copyRet
     , copyAndFreeze
@@ -48,7 +49,7 @@ import           Data.Monoid
 import           Foreign.Storable
 import           Foreign.Ptr
 
-import           Prelude hiding (length, take, drop, span, concat, replicate, splitAt, null, pred, last, any, all)
+import           Prelude hiding (length, take, drop, span, reverse, concat, replicate, splitAt, null, pred, last, any, all)
 import qualified Prelude
 
 #if defined(WITH_BYTESTRING_SUPPORT) && defined(WITH_BASEMENT_SUPPORT)
@@ -195,6 +196,11 @@ span pred bs
             | otherwise         = i
         len = length bs
 
+-- | Reverse a bytearray
+reverse :: ByteArray bs => bs -> bs
+reverse bs = unsafeCreate n $ \d -> withByteArray bs $ \s -> memReverse d s n
+  where n = length bs
+
 -- | Concatenate bytearray into a larger bytearray
 concat :: (ByteArrayAccess bin, ByteArray bout) => [bin] -> bout
 concat l = unsafeCreate retLen (loopCopy l)
@@ -203,7 +209,7 @@ concat l = unsafeCreate retLen (loopCopy l)
 
     loopCopy []     _   = return ()
     loopCopy (x:xs) dst = do
-        withByteArray x $ \src -> memCopy dst src chunkLen
+        copyByteArrayToPtr x dst
         loopCopy xs (dst `plusPtr` chunkLen)
       where
         !chunkLen = length x
@@ -216,14 +222,14 @@ append = mappend
 copy :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> IO bs2
 copy bs f =
     alloc (length bs) $ \d -> do
-        withByteArray bs $ \s -> memCopy d s (length bs)
+        copyByteArrayToPtr bs d
         f (castPtr d)
 
 -- | Similar to 'copy' but also provide a way to return a value from the initializer
 copyRet :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO a) -> IO (a, bs2)
 copyRet bs f =
     allocRet (length bs) $ \d -> do
-        withByteArray bs $ \s -> memCopy d s (length bs)
+        copyByteArrayToPtr bs d
         f (castPtr d)
 
 -- | Similiar to 'copy' but expect the resulting bytearray in a pure context
