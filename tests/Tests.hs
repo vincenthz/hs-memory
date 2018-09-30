@@ -19,11 +19,8 @@ import qualified Data.ByteArray.Parse    as Parse
 
 import qualified SipHash
 
-#ifdef WITH_FOUNDATION_SUPPORT
-import qualified Foundation as F
-#if MIN_VERSION_basement(0,0,5)
+#ifdef WITH_BASEMENT_SUPPORT
 import           Basement.Block (Block)
-#endif
 import           Basement.UArray (UArray)
 #endif
 
@@ -33,7 +30,7 @@ instance Arbitrary Positive where
     arbitrary = Positive <$> between (0, 255)
 
 data Backend = BackendByte | BackendScrubbedBytes
-#ifdef WITH_FOUNDATION_SUPPORT
+#ifdef WITH_BASEMENT_SUPPORT
 #if MIN_VERSION_basement(0,0,5)
     | BackendBlock
 #endif
@@ -52,7 +49,7 @@ arbitraryBS n = do
     case backend of
         BackendByte          -> ArbitraryBS `fmap` ((B.pack `fmap` replicateM (fromIntegral n) arbitrary) :: Gen Bytes)
         BackendScrubbedBytes -> ArbitraryBS `fmap` ((B.pack `fmap` replicateM (fromIntegral n) arbitrary) :: Gen ScrubbedBytes)
-#ifdef WITH_FOUNDATION_SUPPORT
+#ifdef WITH_BASEMENT_SUPPORT
 #if MIN_VERSION_basement(0,0,5)
         BackendBlock         -> ArbitraryBS `fmap` ((B.pack `fmap` replicateM (fromIntegral n) arbitrary) :: Gen (Block Word8))
 #endif
@@ -82,10 +79,8 @@ testGroupBackends x l =
     Group x
         [ Group "Bytes" (l withBytesWitness)
         , Group "ScrubbedBytes" (l withScrubbedBytesWitness)
-#ifdef WITH_FOUNDATION_SUPPORT
-#if MIN_VERSION_basement(0,0,5)
+#ifdef WITH_BASEMENT_SUPPORT
         , Group "Block" (l withBlockWitness)
-#endif
         , Group "UArray" (l withUArrayWitness)
 #endif
         ]
@@ -222,7 +217,7 @@ main = defaultMain $ Group "memory"
         ]
     , testShowProperty "showing" $ \witnessID expectedShow (Words8 l) ->
           (show . witnessID . B.pack $ l) == expectedShow l
-#ifdef WITH_FOUNDATION_SUPPORT
+#ifdef WITH_BASEMENT_SUPPORT
     , testFoundationTypes
 #endif
     ]
@@ -278,19 +273,19 @@ main = defaultMain $ Group "memory"
              in B.span (const False) b == (B.empty, b)
         ]
 
-#ifdef WITH_FOUNDATION_SUPPORT
-testFoundationTypes = Group "Foundation"
-  [ CheckPlan "allocRet 4 _ :: F.UArray Int8 === 4" $ do
-      x <- pick "allocateRet 4 _" $ (B.length :: F.UArray F.Int8 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+#ifdef WITH_BASEMENT_SUPPORT
+testFoundationTypes = Group "Basement"
+  [ CheckPlan "allocRet 4 _ :: UArray Int8 === 4" $ do
+      x <- pick "allocateRet 4 _" $ (B.length :: UArray Int8 -> Int) . snd <$> B.allocRet 4 (const $ return ())
       validate "4 === x" $ x === 4
-  , CheckPlan "allocRet 4 _ :: F.UArray Int16 === 4" $ do
-      x <- pick "allocateRet 4 _" $ (B.length :: F.UArray F.Int16 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+  , CheckPlan "allocRet 4 _ :: UArray Int16 === 4" $ do
+      x <- pick "allocateRet 4 _" $ (B.length :: UArray Int16 -> Int) . snd <$> B.allocRet 4 (const $ return ())
       validate "4 === x" $ x === 4
-  , CheckPlan "allocRet 4 _ :: F.UArray Int32 === 4" $ do
-      x <- pick "allocateRet 4 _" $ (B.length :: F.UArray F.Int32 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+  , CheckPlan "allocRet 4 _ :: UArray Int32 === 4" $ do
+      x <- pick "allocateRet 4 _" $ (B.length :: UArray Int32 -> Int) . snd <$> B.allocRet 4 (const $ return ())
       validate "4 === x" $ x === 4
-  , CheckPlan "allocRet 4 _ :: F.UArray Int64 === 8" $ do
-      x <- pick "allocateRet 4 _" $ (B.length :: F.UArray F.Int64 -> Int) . snd <$> B.allocRet 4 (const $ return ())
+  , CheckPlan "allocRet 4 _ :: UArray Int64 === 8" $ do
+      x <- pick "allocateRet 4 _" $ (B.length :: UArray Int64 -> Int) . snd <$> B.allocRet 4 (const $ return ())
       validate "8 === x" $ x === 8
   ]
 #endif

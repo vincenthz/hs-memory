@@ -1,5 +1,5 @@
 Name:                memory
-version:             0.14.16
+version:             0.14.17
 Synopsis:            memory and related abstraction stuff
 Description:
     Chunk of memory, polymorphic byte array management and manipulation
@@ -25,7 +25,7 @@ Stability:           experimental
 Build-Type:          Simple
 Homepage:            https://github.com/vincenthz/hs-memory
 Bug-Reports:         https://github.com/vincenthz/hs-memory/issues
-Cabal-Version:       >=1.18
+cabal-version:       1.18
 extra-doc-files:     README.md CHANGELOG.md
 
 source-repository head
@@ -38,6 +38,11 @@ Flag support_bytestring
   Manual:            True
 
 Flag support_foundation
+  Description:       add support for foundation strings and unboxed array (deprecated use support_basement)
+  Default:           True
+  Manual:            True
+
+Flag support_basement
   Description:       add support for foundation strings and unboxed array
   Default:           True
   Manual:            True
@@ -97,10 +102,9 @@ Library
   if flag(support_deepseq)
     CPP-options:     -DWITH_DEEPSEQ_SUPPORT
     Build-depends:   deepseq >= 1.1
-  if flag(support_foundation)
-    CPP-options:     -DWITH_FOUNDATION_SUPPORT
-    Build-depends:   basement,
-                     foundation >= 0.0.8
+  if flag(support_foundation) || flag(support_basement)
+    CPP-options:     -DWITH_BASEMENT_SUPPORT
+    Build-depends:   basement
     exposed-modules: Data.ByteArray.Sized
 
   ghc-options:       -Wall -fwarn-tabs
@@ -116,12 +120,12 @@ Test-Suite test-memory
   Build-Depends:     base
                    , bytestring
                    , memory
-                   , basement
-                   , foundation >= 0.0.8
+                   , basement >= 0.0.7
+                   , foundation
   ghc-options:       -Wall -fno-warn-orphans -fno-warn-missing-signatures -threaded
   default-language:  Haskell2010
   if flag(support_foundation)
-    CPP-options:     -DWITH_FOUNDATION_SUPPORT
+    CPP-options:     -DWITH_BASEMENT_SUPPORT
 
 -- Test-Suite test-examples
 --   default-language:  Haskell2010

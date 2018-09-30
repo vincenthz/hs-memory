@@ -4,8 +4,7 @@ module Utils where
 import           Data.Word
 import           Data.ByteArray               (Bytes, ScrubbedBytes)
 
-#ifdef WITH_FOUNDATION_SUPPORT
-import qualified Foundation as F
+#ifdef WITH_BASEMENT_SUPPORT
 import           Basement.Block (Block)
 import           Basement.UArray (UArray)
 #endif
@@ -28,7 +27,7 @@ withBytesWitness = withWitness (Witness :: Witness Bytes)
 withScrubbedBytesWitness :: ScrubbedBytes -> ScrubbedBytes
 withScrubbedBytesWitness = id
 
-#ifdef WITH_FOUNDATION_SUPPORT
+#ifdef WITH_BASEMENT_SUPPORT
 withBlockWitness :: Block Word8 -> Block Word8
 withBlockWitness = withWitness (Witness :: Witness (Block Word8))
 
