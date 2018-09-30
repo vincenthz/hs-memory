@@ -1,3 +1,7 @@
+## 0.14.18
+
+* Branch/Release Snafu
+
 ## 0.14.17
 
 * Require basement >= 0.0.7, Fix compilation with GHC 8,6
