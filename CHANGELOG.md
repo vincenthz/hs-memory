@@ -1,3 +1,8 @@
+## 0.14.17
+
+* Require basement >= 0.0.7, Fix compilation with GHC 8,6
+* Cleanup CPP, dropping support for much older version
+
 ## 0.14.16
 
 * Fix compilation with a newer basement (>= 0.0.7) and an older GHC (< 8.0)
