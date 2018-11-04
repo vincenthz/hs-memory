@@ -104,7 +104,7 @@ Library
     Build-depends:   deepseq >= 1.1
   if flag(support_foundation) || flag(support_basement)
     CPP-options:     -DWITH_BASEMENT_SUPPORT
-    Build-depends:   basement
+    Build-depends:   basement >= 0.0.7
     exposed-modules: Data.ByteArray.Sized
 
   ghc-options:       -Wall -fwarn-tabs
