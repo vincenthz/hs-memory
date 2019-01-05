@@ -53,13 +53,11 @@ memXorWith destination !v source bytes
     | destination == source = loopInplace source bytes
     | otherwise             = loop destination source bytes
   where
-    loop _   _  0 = return ()
-    loop !d !s !n = do
+    loop !d !s n = when (n > 0) $ do
         peek s >>= poke d . xor v
         loop (d `plusPtr` 1) (s `plusPtr` 1) (n-1)
 
-    loopInplace _   0 = return ()
-    loopInplace !s !n = do
+    loopInplace !s n = when (n > 0) $ do
         peek s >>= poke s . xor v
         loopInplace (s `plusPtr` 1) (n-1)
 

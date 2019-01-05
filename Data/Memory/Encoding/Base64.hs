@@ -26,7 +26,6 @@ module Data.Memory.Encoding.Base64
     , fromBase64OpenBSD
     ) where
 
-import           Control.Monad
 import           Data.Memory.Internal.Compat
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Imports
