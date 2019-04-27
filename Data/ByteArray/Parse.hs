@@ -12,8 +12,8 @@
 -- > > parse ((,,) <$> take 2 <*> byte 0x20 <*> (bytes "abc" *> anyByte)) "xx abctest"
 -- > ParseOK "est" ("xx", 116)
 --
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Data.ByteArray.Parse
     ( Parser
@@ -36,6 +36,7 @@ module Data.ByteArray.Parse
     ) where
 
 import           Control.Monad
+import qualified Control.Monad.Fail as Fail
 import           Foreign.Storable              (Storable, peek, sizeOf)
 import           Data.Word
 
@@ -84,10 +85,14 @@ instance Applicative (Parser byteArray) where
     pure      = return
     (<*>) d e = d >>= \b -> e >>= \a -> return (b a)
 instance Monad (Parser byteArray) where
-    fail errorMsg = Parser $ \buf err _ -> err buf ("Parser failed: " ++ errorMsg)
+#if !(MIN_VERSION_base(4,13,0))
+    fail          = Fail.fail
+#endif
     return v      = Parser $ \buf _ ok -> ok buf v
     m >>= k       = Parser $ \buf err ok ->
          runParser m buf err (\buf' a -> runParser (k a) buf' err ok)
+instance Fail.MonadFail (Parser byteArray) where
+    fail errorMsg = Parser $ \buf err _ -> err buf ("Parser failed: " ++ errorMsg)
 instance MonadPlus (Parser byteArray) where
     mzero = fail "MonadPlus.mzero"
     mplus f g = Parser $ \buf err ok ->
