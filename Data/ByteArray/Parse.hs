@@ -15,6 +15,7 @@
 {-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 module Data.ByteArray.Parse
     ( Parser
     , Result(..)
@@ -35,6 +36,7 @@ module Data.ByteArray.Parse
     , takeStorable
     ) where
 
+import qualified Control.Monad.Fail as Fail
 import           Control.Monad
 import           Foreign.Storable              (Storable, peek, sizeOf)
 import           Data.Word
@@ -83,8 +85,12 @@ instance Functor (Parser byteArray) where
 instance Applicative (Parser byteArray) where
     pure      = return
     (<*>) d e = d >>= \b -> e >>= \a -> return (b a)
-instance Monad (Parser byteArray) where
+instance Fail.MonadFail (Parser byteArray) where
     fail errorMsg = Parser $ \buf err _ -> err buf ("Parser failed: " ++ errorMsg)
+instance Monad (Parser byteArray) where
+#if !MIN_VERSION_base(4,13,0)
+    fail = Fail.fail
+#endif
     return v      = Parser $ \buf _ ok -> ok buf v
     m >>= k       = Parser $ \buf err ok ->
          runParser m buf err (\buf' a -> runParser (k a) buf' err ok)
