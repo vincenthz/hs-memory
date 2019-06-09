@@ -14,13 +14,11 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE MagicHash #-}
-{-# LANGUAGE UnboxedTuples #-}
 module Data.Memory.Internal.CompatPrim
     ( be32Prim
     , le32Prim
     , byteswap32Prim
     , booleanPrim
-    , eitherDivideBy8#
     ) where
 
 import GHC.Prim
@@ -70,21 +68,3 @@ booleanPrim :: Bool -> Bool
 booleanPrim b = b
 #endif
 {-# INLINE booleanPrim #-}
-
--- | Apply or or another function if 8 divides the number of bytes
-eitherDivideBy8# :: Int#        -- ^ number of bytes
-                 -> (Int# -> a) -- ^ if it divided by 8, the argument is the number of 8 bytes words
-                 -> (Int# -> a) -- ^ if it doesn't, just the number of bytes
-                 -> a
-#if __GLASGOW_HASKELL__ > 704
-eitherDivideBy8# v f8 f1 =
-    let !(# q, r #) = quotRemInt# v 8#
-     in if booleanPrim (r ==# 0#)
-            then f8 q
-            else f1 v
-#else
-eitherDivideBy8# v f8 f1 =
-    if booleanPrim ((remInt# v 8#) ==# 0#)
-        then f8 (quotInt# v 8#)
-        else f1 v
-#endif
