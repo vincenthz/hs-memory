@@ -70,7 +70,6 @@ Library
                      Data.Memory.Internal.CompatPrim64
                      Data.Memory.Internal.DeepSeq
                      Data.Memory.Internal.Imports
-                     Data.Memory.Internal.Scrubber
                      Data.Memory.Hash.SipHash
                      Data.Memory.Hash.FNV
                      Data.ByteArray.Pack.Internal

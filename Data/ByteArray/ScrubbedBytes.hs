@@ -25,11 +25,10 @@ import           Data.Monoid
 #endif
 import           Data.String (IsString(..))
 import           Data.Typeable
-import           Data.Memory.PtrMethods          (memCopy, memConstEqual)
+import           Data.Memory.PtrMethods
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
 import           Data.Memory.Internal.Imports
-import           Data.Memory.Internal.Scrubber   (getScrubber)
 import           Data.ByteArray.Types
 import           Foreign.Storable
 #ifdef MIN_VERSION_basement
@@ -90,11 +89,17 @@ newScrubbedBytes (I# sz)
     | otherwise               = IO $ \s ->
         case newAlignedPinnedByteArray# sz 8# s of
             (# s1, mbarr #) ->
-                let !scrubber = (getScrubber sz) (byteArrayContents# (unsafeCoerce# mbarr))
+                let !scrubber = getScrubber (byteArrayContents# (unsafeCoerce# mbarr))
                     !mba      = ScrubbedBytes mbarr
                  in case mkWeak# mbarr () (finalize scrubber mba) s1 of
                     (# s2, _ #) -> (# s2, mba #)
   where
+    getScrubber :: Addr# -> State# RealWorld -> State# RealWorld
+    getScrubber addr s =
+        let IO scrubBytes = memSet (Ptr addr) 0 (I# sz)
+         in case scrubBytes s of
+                (# s', _ #) -> s'
+
 #if __GLASGOW_HASKELL__ >= 800
     finalize :: (State# RealWorld -> State# RealWorld) -> ScrubbedBytes -> State# RealWorld -> (# State# RealWorld, () #)
     finalize scrubber mba@(ScrubbedBytes _) = \s1 ->
