@@ -1,7 +1,8 @@
 # compiler supported and their equivalent LTS
 compiler: ghc-8.0 lts-9.21
 compiler: ghc-8.2 lts-11.22
-compiler: ghc-8.4 lts-12.11
+compiler: ghc-8.4 lts-12.26
+compiler: ghc-8.6 lts-13.18
 
 # options
 # option: alias x=y z=v
@@ -10,6 +11,7 @@ compiler: ghc-8.4 lts-12.11
 build: ghc-8.0 extradep=basement-0.0.8 extradep=foundation-0.0.21
 build: ghc-8.2
 build: ghc-8.4 os=linux,win,osx
+build: ghc-8.6
 
 # packages
 package: '.'
