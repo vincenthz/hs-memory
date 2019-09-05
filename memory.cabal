@@ -117,8 +117,11 @@ Test-Suite test-memory
   Other-modules:     Imports
                      SipHash
                      Utils
-  Build-Depends:     base
-                   , bytestring
+  if impl(ghc < 8.0)
+    buildable: False
+  else
+    build-depends:   base
+  Build-Depends:     bytestring
                    , memory
                    , basement >= 0.0.7
                    , foundation
