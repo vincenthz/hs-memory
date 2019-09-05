@@ -14,7 +14,6 @@ module Data.ByteArray.Pack.Internal
     , actionPackerWithRemain
     ) where
 
-import           Data.Word
 import           Foreign.Ptr (Ptr)
 import           Data.ByteArray.MemView
 import           Data.Memory.Internal.Imports
