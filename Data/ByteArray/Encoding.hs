@@ -33,6 +33,13 @@ import           Data.Memory.Encoding.Base64
 -- encoding is often used in other specifications without
 -- <http://tools.ietf.org/html/rfc4648#section-3.2 padding> characters.
 --
+-- <https://www.ietf.org/rfc/rfc2045.txt RFC 2045>
+-- defines a separate Base64 encoding, which is not supported. This format
+-- requires a newline at least every 76 encoded characters, which works around
+-- limitations of older email programs that could not handle long lines.
+-- Be aware that other languages, such as Ruby, encode the RFC 2045 version
+-- by default. To decode their ouput, remove all newlines before decoding.
+--
 -- ==== Examples
 --
 -- A quick example to show the differences:
