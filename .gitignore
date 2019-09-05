@@ -5,3 +5,4 @@
 dist
 .stack-work
 refs/
+stack.yaml.lock
