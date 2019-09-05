@@ -13,7 +13,8 @@ build: ghc-8.0 extradep=basement-0.0.8 extradep=foundation-0.0.21
 build: ghc-8.2
 build: ghc-8.4 os=linux,win,osx
 build: ghc-8.6
-build: ghc-8.8 extradep=basement-0.0.11@sha256:af43e2e334e515b52ca309919b135c51b5e9411e6d4c68d0e8950d61eb5f25d1,5711
+build: ghc-8.8 extradep=basement-0.0.11@sha256:af43e2e334e515b52ca309919b135c51b5e9411e6d4c68d0e8950d61eb5f25d1,5711 extradep=foundation-0.0.24@sha256:7d6b57d3b293a46680a6c044ded62655e7b7477d1082f710162b018333ae35f5,11653
+
 
 # packages
 package: '.'
