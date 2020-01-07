@@ -99,7 +99,7 @@ class (ByteArrayAccess c, KnownNat n) => ByteArrayN (n :: Nat) c | c -> n where
 -- | Wrapper around any collection type with the size as type parameter
 --
 newtype SizedByteArray (n :: Nat) ba = SizedByteArray { unSizedByteArray :: ba }
-  deriving (Eq, Show, Typeable, Ord, NormalForm, Semigroup, Monoid)
+  deriving (Eq, Show, Typeable, Ord, NormalForm)
 
 -- | create a 'SizedByteArray' from the given 'ByteArrayAccess' if the
 -- size is the same as the target size.
