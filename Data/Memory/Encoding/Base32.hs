@@ -25,7 +25,7 @@ import           Data.Memory.Internal.Compat
 import           Data.Memory.Internal.CompatPrim
 import           Data.Word
 import           Data.Bits ((.|.))
-import           GHC.Prim
+import           GHC.Exts
 import           GHC.Word
 import           Control.Monad
 import           Foreign.Storable

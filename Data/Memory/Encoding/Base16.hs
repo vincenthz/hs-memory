@@ -24,7 +24,7 @@ module Data.Memory.Encoding.Base16
 import           Data.Memory.Internal.Compat
 import           Data.Word
 import           Data.Bits ((.|.))
-import           GHC.Prim
+import           GHC.Exts
 import           GHC.Types
 import           GHC.Word
 import           Control.Monad

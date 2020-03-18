@@ -21,7 +21,7 @@ module Data.Memory.Internal.CompatPrim
     , booleanPrim
     ) where
 
-import GHC.Prim
+import GHC.Exts
 
 -- | byteswap Word# to or from Big Endian
 --

@@ -29,7 +29,7 @@ import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.CompatPrim64
 import           Data.Memory.Internal.Imports
 import           GHC.Word
-import           GHC.Prim hiding (Word64#, Int64#)
+import           GHC.Exts hiding (Word64#, Int64#)
 import           GHC.Types
 import           GHC.Ptr
 
