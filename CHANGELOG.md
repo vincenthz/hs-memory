@@ -1,3 +1,8 @@
+## HEAD
+
+* Allow the `Data.ByteArray.Sized` module to compile when `basement` support is
+  disabled.
+
 ## 0.14.18
 
 * Branch/Release Snafu

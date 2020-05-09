@@ -21,6 +21,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE StandaloneDeriving #-}
 #if __GLASGOW_HASKELL__ >= 806
 {-# LANGUAGE NoStarIsType #-}
 #endif
@@ -39,8 +40,10 @@ module Data.ByteArray.Sized
     , unsafeCreate
     , inlineUnsafeCreate
     , empty
+#ifdef VERSION_basement
     , pack
     , unpack
+#endif
     , cons
     , snoc
     , xor
@@ -59,14 +62,6 @@ module Data.ByteArray.Sized
     , unsafeFromByteArrayAccess
     ) where
 
-import Basement.Imports
-import Basement.NormalForm
-import Basement.Nat
-import Basement.Numerical.Additive ((+))
-import Basement.Numerical.Subtractive ((-))
-
-import Basement.Sized.List (ListN, unListN, toListN)
-
 import           Foreign.Storable
 import           Foreign.Ptr
 import           Data.Maybe (fromMaybe)
@@ -79,11 +74,26 @@ import Data.Proxy (Proxy(..))
 import Data.ByteArray.Types (ByteArrayAccess(..), ByteArray)
 import qualified Data.ByteArray.Types as ByteArray (allocRet)
 
+#ifdef VERSION_basement
+import Basement.Imports
+import Basement.NormalForm
+import Basement.Nat
+import Basement.Numerical.Additive ((+))
+import Basement.Numerical.Subtractive ((-))
+import Basement.Sized.List (ListN, unListN, toListN)
+
 #if MIN_VERSION_basement(0,0,7)
 import           Basement.BlockN (BlockN)
 import qualified Basement.BlockN as BlockN
 import qualified Basement.PrimType as Base
 import           Basement.Types.OffsetSize (Countable)
+#endif
+
+#else
+import Prelude hiding (length, replicate, drop, take, splitAt)
+import GHC.TypeLits (Nat, KnownNat, natVal, type (+), type (<=))
+import Data.Word (Word8)
+import Data.Typeable (Typeable)
 #endif
 
 -- | Type class to emulate exactly the behaviour of 'ByteArray' but with
@@ -99,7 +109,7 @@ class (ByteArrayAccess c, KnownNat n) => ByteArrayN (n :: Nat) c | c -> n where
 -- | Wrapper around any collection type with the size as type parameter
 --
 newtype SizedByteArray (n :: Nat) ba = SizedByteArray { unSizedByteArray :: ba }
-  deriving (Eq, Show, Typeable, Ord, NormalForm)
+  deriving (Eq, Show, Typeable, Ord)
 
 -- | create a 'SizedByteArray' from the given 'ByteArrayAccess' if the
 -- size is the same as the target size.
@@ -129,6 +139,29 @@ instance (KnownNat n, ByteArray ba) => ByteArrayN n (SizedByteArray n ba) where
       where
         n = fromInteger $ natVal p
 
+#ifdef VERSION_basement
+deriving instance NormalForm ba => NormalForm (SizedByteArray n ba)
+
+-- | Pack a list of bytes into a bytearray
+pack :: forall n ba . (ByteArrayN n ba, KnownNat n) => ListN n Word8 -> ba
+pack l = inlineUnsafeCreate @n (fill $ unListN l)
+  where fill []     _  = return ()
+        fill (x:xs) !p = poke p x >> fill xs (p `plusPtr` 1)
+        {-# INLINE fill #-}
+{-# NOINLINE pack #-}
+
+-- | Un-pack a bytearray into a list of bytes
+unpack :: forall n ba
+        . (ByteArrayN n ba, KnownNat n, NatWithinBound Int n, ByteArrayAccess ba)
+       => ba -> ListN n Word8
+unpack bs =  fromMaybe (error "the impossible appened") $ toListN @n $ loop 0
+  where !len = length bs
+        loop i
+            | i == len  = []
+            | otherwise =
+                let !v = unsafeDoIO $ withByteArray bs (`peekByteOff` i)
+                 in v : loop (i+1)
+
 #if MIN_VERSION_basement(0,0,7)
 instance ( ByteArrayAccess (BlockN n ty)
          , PrimType ty
@@ -142,6 +175,7 @@ instance ( ByteArrayAccess (BlockN n ty)
         a   <- BlockN.withMutablePtrHint True False mba (f . castPtr)
         ba  <- BlockN.freeze mba
         return (a, ba)
+#endif
 #endif
 
 
@@ -178,26 +212,6 @@ inlineUnsafeCreate f = unsafeDoIO (alloc @n f)
 -- | Create an empty byte array
 empty :: forall ba . ByteArrayN 0 ba => ba
 empty = unsafeDoIO (alloc @0 $ \_ -> return ())
-
--- | Pack a list of bytes into a bytearray
-pack :: forall n ba . (ByteArrayN n ba, KnownNat n) => ListN n Word8 -> ba
-pack l = inlineUnsafeCreate @n (fill $ unListN l)
-  where fill []     _  = return ()
-        fill (x:xs) !p = poke p x >> fill xs (p `plusPtr` 1)
-        {-# INLINE fill #-}
-{-# NOINLINE pack #-}
-
--- | Un-pack a bytearray into a list of bytes
-unpack :: forall n ba
-        . (ByteArrayN n ba, KnownNat n, NatWithinBound Int n, ByteArrayAccess ba)
-       => ba -> ListN n Word8
-unpack bs =  fromMaybe (error "the impossible appened") $ toListN @n $ loop 0
-  where !len = length bs
-        loop i
-            | i == len  = []
-            | otherwise =
-                let !v = unsafeDoIO $ withByteArray bs (`peekByteOff` i)
-                 in v : loop (i+1)
 
 -- | prepend a single byte to a byte array
 cons :: forall ni no bi bo
@@ -251,9 +265,9 @@ index :: forall n na ba
          , n <= na
          )
       => ba -> Proxy n -> Word8
-index b pi = unsafeDoIO $ withByteArray b $ \p -> peek (p `plusPtr` i)
+index b pn = unsafeDoIO $ withByteArray b $ \p -> peek (p `plusPtr` n)
   where
-    i = fromInteger $ natVal pi
+    n = fromInteger $ natVal pn
 
 -- | Split a bytearray at a specific length in two bytearray
 splitAt :: forall nblhs nbi nbrhs bi blhs brhs
