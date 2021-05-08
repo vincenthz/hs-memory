@@ -16,6 +16,9 @@ module Data.ByteArray.Bytes
     ( Bytes
     ) where
 
+#if MIN_VERSION_base(4,15,0)
+import           GHC.Exts (unsafeCoerce#)
+#endif
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr

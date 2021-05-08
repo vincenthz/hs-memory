@@ -17,6 +17,9 @@ module Data.ByteArray.ScrubbedBytes
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
+#if MIN_VERSION_base(4,15,0)
+import           GHC.Exts (unsafeCoerce#)
+#endif
 #if MIN_VERSION_base(4,9,0)
 import           Data.Semigroup
 import           Data.Foldable (toList)
