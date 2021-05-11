@@ -20,7 +20,7 @@ module Data.ByteArray.Bytes
 import           GHC.Exts (unsafeCoerce#)
 #endif
 import           GHC.Types
-import           GHC.Prim
+import           GHC.Exts hiding (toList)
 import           GHC.Ptr
 #if MIN_VERSION_base(4,9,0)
 import           Data.Semigroup

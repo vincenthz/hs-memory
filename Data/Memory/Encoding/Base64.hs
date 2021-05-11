@@ -30,7 +30,7 @@ import           Data.Memory.Internal.Compat
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Imports
 import           Data.Bits ((.|.))
-import           GHC.Prim
+import           GHC.Exts
 import           GHC.Word
 import           Foreign.Storable
 import           Foreign.Ptr (Ptr)

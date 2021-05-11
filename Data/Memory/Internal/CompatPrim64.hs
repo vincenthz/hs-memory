@@ -52,7 +52,7 @@ module Data.Memory.Internal.CompatPrim64
 
 
 #if WORD_SIZE_IN_BITS == 64
-import GHC.Prim hiding (Word64#, Int64#)
+import GHC.Exts hiding (Word64#, Int64#, uncheckedShiftL64#, uncheckedShiftRL64#)
 
 #if __GLASGOW_HASKELL__ >= 708
 type OutBool = Int#
@@ -149,7 +149,7 @@ w64# w _ _ = w
 
 #elif WORD_SIZE_IN_BITS == 32
 import GHC.IntWord64
-import GHC.Prim (Word#)
+import GHC.Exts (Word#)
 
 timesWord64# :: Word64# -> Word64# -> Word64#
 timesWord64# a b =
