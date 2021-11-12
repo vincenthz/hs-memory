@@ -28,6 +28,7 @@ import           Data.Monoid
 #endif
 import           Data.String (IsString(..))
 import           Data.Typeable
+import           Data.Memory.HeadHackageUtils
 import           Data.Memory.PtrMethods
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
@@ -188,9 +189,9 @@ scrubbedBytesCompare b1@(ScrubbedBytes m1) b2@(ScrubbedBytes m2) = unsafeDoIO $ 
             case readWord8Array# m1 i s1 of
                 (# s2, e1 #) -> case readWord8Array# m2 i s2 of
                     (# s3, e2 #) ->
-                        if booleanPrim (eqWord# e1 e2)
+                        if booleanPrim (eqWord# (word8ToWordCompat# e1) (word8ToWordCompat# e2))
                             then loop (i +# 1#) s3
-                            else if booleanPrim (ltWord# e1 e2) then (# s3, LT #)
+                            else if booleanPrim (ltWord# (word8ToWordCompat# e1) (word8ToWordCompat# e2)) then (# s3, LT #)
                                                                 else (# s3, GT #)
 
 scrubbedFromChar8 :: [Char] -> ScrubbedBytes

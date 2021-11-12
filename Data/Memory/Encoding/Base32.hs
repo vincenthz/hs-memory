@@ -21,6 +21,7 @@ module Data.Memory.Encoding.Base32
     , fromBase32
     ) where
 
+import           Data.Memory.HeadHackageUtils
 import           Data.Memory.Internal.Compat
 import           Data.Memory.Internal.CompatPrim
 import           Data.Word
@@ -88,21 +89,21 @@ toBase32Per5Bytes (W8# i1, W8# i2, W8# i3, W8# i4, W8# i5) =
     (index o1, index o2, index o3, index o4, index o5, index o6, index o7, index o8)
   where
     -- 1111 1000 >> 3
-    !o1 =     (uncheckedShiftRL# (and# i1 0xF8##) 3#)
+    !o1 =     (uncheckedShiftRL# (and# (word8ToWordCompat# i1) 0xF8##) 3#)
     -- 0000 0111 << 2 | 1100 0000 >> 6
-    !o2 = or# (uncheckedShiftL#  (and# i1 0x07##) 2#) (uncheckedShiftRL# (and# i2 0xC0##) 6#)
+    !o2 = or# (uncheckedShiftL#  (and# (word8ToWordCompat# i1) 0x07##) 2#) (uncheckedShiftRL# (and# (word8ToWordCompat# i2) 0xC0##) 6#)
     -- 0011 1110 >> 1
-    !o3 =     (uncheckedShiftRL# (and# i2 0x3E##) 1#)
+    !o3 =     (uncheckedShiftRL# (and# (word8ToWordCompat# i2) 0x3E##) 1#)
     -- 0000 0001 << 4 | 1111 0000 >> 4
-    !o4 = or# (uncheckedShiftL#  (and# i2 0x01##) 4#) (uncheckedShiftRL# (and# i3 0xF0##) 4#)
+    !o4 = or# (uncheckedShiftL#  (and# (word8ToWordCompat# i2) 0x01##) 4#) (uncheckedShiftRL# (and# (word8ToWordCompat# i3) 0xF0##) 4#)
     -- 0000 1111 << 1 | 1000 0000 >> 7
-    !o5 = or# (uncheckedShiftL#  (and# i3 0x0F##) 1#) (uncheckedShiftRL# (and# i4 0x80##) 7#)
+    !o5 = or# (uncheckedShiftL#  (and# (word8ToWordCompat# i3) 0x0F##) 1#) (uncheckedShiftRL# (and# (word8ToWordCompat# i4) 0x80##) 7#)
     -- 0111 1100 >> 2
-    !o6 =     (uncheckedShiftRL# (and# i4 0x7C##) 2#)
+    !o6 =     (uncheckedShiftRL# (and# (word8ToWordCompat# i4) 0x7C##) 2#)
     -- 0000 0011 << 3 | 1110 0000 >> 5
-    !o7 = or# (uncheckedShiftL#  (and# i4 0x03##) 3#) (uncheckedShiftRL# (and# i5 0xE0##) 5#)
+    !o7 = or# (uncheckedShiftL#  (and# (word8ToWordCompat# i4) 0x03##) 3#) (uncheckedShiftRL# (and# (word8ToWordCompat# i5) 0xE0##) 5#)
     -- 0001 1111
-    !o8 =     ((and# i5 0x1F##))
+    !o8 =     ((and# (word8ToWordCompat# i5) 0x1F##))
 
     !set = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"#
 
@@ -235,8 +236,8 @@ fromBase32Per8Bytes (i1, i2, i3, i4, i5, i6, i7, i8) =
   where
     rset :: Word8 -> Word8
     rset (W8# w)
-        | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
-        | otherwise                        = 0xff
+        | booleanPrim (word8ToWordCompat# w `leWord#` 0xff##)
+                                           = W8# (indexWord8OffAddr# rsetTable (word2Int# (word8ToWordCompat# w)))
 
     !rsetTable = "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\
                  \\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\

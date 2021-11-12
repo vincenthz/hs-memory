@@ -72,6 +72,7 @@ Library
                      Data.Memory.Internal.Imports
                      Data.Memory.Hash.SipHash
                      Data.Memory.Hash.FNV
+                     Data.Memory.HeadHackageUtils
                      Data.ByteArray.Pack.Internal
                      Data.ByteArray.Types
                      Data.ByteArray.Bytes

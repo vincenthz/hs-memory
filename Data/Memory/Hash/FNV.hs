@@ -8,6 +8,7 @@
 -- Fowler Noll Vo Hash (1 and 1a / 32 / 64 bits versions)
 -- <http://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function>
 --
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MagicHash                  #-}
 {-# LANGUAGE UnboxedTuples              #-}
@@ -24,12 +25,17 @@ module Data.Memory.Hash.FNV
     , fnv1a_64
     ) where
 
+import           Data.Memory.HeadHackageUtils
 import           Data.Memory.Internal.Compat ()
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.CompatPrim64
 import           Data.Memory.Internal.Imports
 import           GHC.Word
-import           GHC.Prim hiding (Word64#, Int64#)
+import           GHC.Prim hiding ( Word64#, Int64#
+#if __GLASGOW_HASKELL__ >= 903
+                                 , timesWord64#, xor64#, wordToWord64#
+#endif
+                                 )
 import           GHC.Types
 import           GHC.Ptr
 
@@ -44,40 +50,40 @@ newtype FnvHash64 = FnvHash64 Word64
 -- | compute FNV1 (32 bit variant) of a raw piece of memory
 fnv1 :: Ptr Word8 -> Int -> IO FnvHash32
 fnv1 (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
-  where 
+  where
         loop :: Word# -> Int# -> State# s -> (# State# s, FnvHash32 #)
         loop !acc i s
-            | booleanPrim (i ==# n) = (# s, FnvHash32 $ W32# (narrow32Word# acc) #)
+            | booleanPrim (i ==# n) = (# s, FnvHash32 $ W32# (narrow32WordCompat# acc) #)
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = (0x01000193## `timesWord#` acc) `xor#` v
+                        let !nacc = (0x01000193## `timesWord#` acc) `xor#` word8ToWordCompat# v
                          in loop nacc (i +# 1#) s2
 
 -- | compute FNV1a (32 bit variant) of a raw piece of memory
 fnv1a :: Ptr Word8 -> Int -> IO FnvHash32
 fnv1a (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
-  where 
+  where
         loop :: Word# -> Int# -> State# s -> (# State# s, FnvHash32 #)
         loop !acc i s
-            | booleanPrim (i ==# n) = (# s, FnvHash32 $ W32# (narrow32Word# acc) #)
+            | booleanPrim (i ==# n) = (# s, FnvHash32 $ W32# (narrow32WordCompat# acc) #)
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = 0x01000193## `timesWord#` (acc `xor#` v)
+                        let !nacc = 0x01000193## `timesWord#` (acc `xor#` word8ToWordCompat# v)
                          in loop nacc (i +# 1#) s2
 
 -- | compute FNV1 (64 bit variant) of a raw piece of memory
 fnv1_64 :: Ptr Word8 -> Int -> IO FnvHash64
 fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
-  where 
+  where
         loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
         loop !acc i s
             | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = (fnv64Prime `timesWord64#` acc) `xor64#` (wordToWord64# v)
+                        let !nacc = (fnv64Prime `timesWord64#` acc) `xor64#` (wordToWord64# (word8ToWordCompat# v))
                          in loop nacc (i +# 1#) s2
 
         fnv64Const :: Word64#
@@ -89,14 +95,14 @@ fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
 -- | compute FNV1a (64 bit variant) of a raw piece of memory
 fnv1a_64 :: Ptr Word8 -> Int -> IO FnvHash64
 fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
-  where 
+  where
         loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
         loop !acc i s
             | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
             | otherwise             =
                 case readWord8OffAddr# addr i s of
                     (# s2, v #) ->
-                        let !nacc = fnv64Prime `timesWord64#` (acc `xor64#` wordToWord64# v)
+                        let !nacc = fnv64Prime `timesWord64#` (acc `xor64#` wordToWord64# (word8ToWordCompat# v))
                          in loop nacc (i +# 1#) s2
 
         fnv64Const :: Word64#
