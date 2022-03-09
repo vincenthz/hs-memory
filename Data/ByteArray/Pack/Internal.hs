@@ -38,7 +38,7 @@ instance Applicative Packer where
     (<*>) = appendPacker
 
 instance Monad Packer where
-    return = returnPacker
+    return = pure
     (>>=)  = bindPacker
 
 fmapPacker :: (a -> b) -> Packer a -> Packer b
