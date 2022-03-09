@@ -82,13 +82,13 @@ instance Functor (Parser byteArray) where
     fmap f p = Parser $ \buf err ok ->
         runParser p buf err (\b a -> ok b (f a))
 instance Applicative (Parser byteArray) where
-    pure      = return
+    pure v    = Parser $ \buf _ ok -> ok buf v
     (<*>) d e = d >>= \b -> e >>= \a -> return (b a)
 instance Monad (Parser byteArray) where
 #if !(MIN_VERSION_base(4,13,0))
     fail          = Fail.fail
 #endif
-    return v      = Parser $ \buf _ ok -> ok buf v
+    return        = pure
     m >>= k       = Parser $ \buf err ok ->
          runParser m buf err (\buf' a -> runParser (k a) buf' err ok)
 instance Fail.MonadFail (Parser byteArray) where
