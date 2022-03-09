@@ -28,15 +28,12 @@ import           Foreign.ForeignPtr (withForeignPtr)
 import           Data.Memory.PtrMethods (memCopy)
 
 
-#ifdef WITH_BASEMENT_SUPPORT
-
 import           Data.Proxy (Proxy(..))
 import           Data.Word (Word8)
 
 import qualified Basement.Types.OffsetSize as Base
 import qualified Basement.UArray as Base
 import qualified Basement.String as Base (String, toBytes, Encoding(UTF8))
-import qualified Basement.PrimType as Base (primSizeInBytes)
 
 import qualified Basement.UArray.Mutable as BaseMutable (withMutablePtrHint)
 import qualified Basement.Block as Block
@@ -44,8 +41,6 @@ import qualified Basement.Block.Mutable as Block
 
 import           Basement.Nat
 import qualified Basement.Sized.Block as BlockN
-
-#endif
 
 import Prelude hiding (length)
 
