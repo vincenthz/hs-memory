@@ -19,6 +19,8 @@ module Data.ByteArray.Bytes
 #if MIN_VERSION_base(4,15,0)
 import           GHC.Exts (unsafeCoerce#)
 #endif
+import           GHC.Word
+import           GHC.Char (chr)
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
@@ -38,6 +40,7 @@ import           Data.Typeable
 #ifdef MIN_VERSION_basement
 import           Basement.NormalForm
 #endif
+import           Basement.IntegralConv
 
 -- | Simplest Byte Array
 data Bytes = Bytes (MutableByteArray# RealWorld)
@@ -149,32 +152,34 @@ bytesEq b1@(Bytes m1) b2@(Bytes m2)
             case readWord8Array# m1 i s of
                 (# s', e1 #) -> case readWord8Array# m2 i s' of
                     (# s'', e2 #) ->
-                        if booleanPrim (eqWord# e1 e2)
+                        if (W8# e1) == (W8# e2)
                             then loop (i +# 1#) s''
                             else (# s'', False #)
     {-# INLINE loop #-}
 
 bytesCompare :: Bytes -> Bytes -> Ordering
-bytesCompare b1@(Bytes m1) b2@(Bytes m2) = unsafeDoIO $ IO $ \s -> loop 0# s
+bytesCompare b1@(Bytes m1) b2@(Bytes m2) = unsafeDoIO $ loop 0
   where
-    !l1       = bytesLength b1
-    !l2       = bytesLength b2
-    !(I# len) = min l1 l2
+    !l1  = bytesLength b1
+    !l2  = bytesLength b2
+    !len = min l1 l2
 
-    loop i s1
-        | booleanPrim (i ==# len) =
+    loop !i
+        | i == len =
             if l1 == l2
-                then (# s1, EQ #)
-                else if l1 > l2 then (# s1, GT #)
-                                else (# s1, LT #)
-        | otherwise               =
-            case readWord8Array# m1 i s1 of
-                (# s2, e1 #) -> case readWord8Array# m2 i s2 of
-                    (# s3, e2 #) ->
-                        if booleanPrim (eqWord# e1 e2)
-                            then loop (i +# 1#) s3
-                            else if booleanPrim (ltWord# e1 e2) then (# s3, LT #)
-                                                                else (# s3, GT #)
+                then pure EQ
+                else if l1 > l2 then pure GT
+                                else pure LT
+        | otherwise               = do
+            e1 <- read8 m1 i
+            e2 <- read8 m2 i
+            if e1 == e2
+                then loop (i+1)
+                else if e1 < e2 then pure LT
+                                else pure GT
+
+    read8 m (I# i) = IO $ \s -> case readWord8Array# m i s of
+                                    (# s2, e #) -> (# s2, W8# e #)
 
 bytesUnpackChars :: Bytes -> String -> String
 bytesUnpackChars (Bytes mba) xs = chunkLoop 0#
@@ -202,7 +207,7 @@ bytesUnpackChars (Bytes mba) xs = chunkLoop 0#
     rChar :: Int# -> IO Char
     rChar idx = IO $ \s ->
         case readWord8Array# mba idx s of
-            (# s2, w #) -> (# s2, C# (chr# (word2Int# w)) #)
+            (# s2, w #) -> (# s2, chr (integralUpsize (W8# w)) #)
 
 {-
 bytesShowHex :: Bytes -> String

@@ -17,6 +17,7 @@ module Data.ByteArray.ScrubbedBytes
 import           GHC.Types
 import           GHC.Prim
 import           GHC.Ptr
+import           GHC.Word
 #if MIN_VERSION_base(4,15,0)
 import           GHC.Exts (unsafeCoerce#)
 #endif
@@ -172,26 +173,28 @@ scrubbedBytesEq a b
         l2 = sizeofScrubbedBytes b
 
 scrubbedBytesCompare :: ScrubbedBytes -> ScrubbedBytes -> Ordering
-scrubbedBytesCompare b1@(ScrubbedBytes m1) b2@(ScrubbedBytes m2) = unsafeDoIO $ IO $ \s -> loop 0# s
+scrubbedBytesCompare b1@(ScrubbedBytes m1) b2@(ScrubbedBytes m2) = unsafeDoIO $ loop 0
   where
-    !l1       = sizeofScrubbedBytes b1
-    !l2       = sizeofScrubbedBytes b2
-    !(I# len) = min l1 l2
+    !l1  = sizeofScrubbedBytes b1
+    !l2  = sizeofScrubbedBytes b2
+    !len = min l1 l2
 
-    loop i s1
-        | booleanPrim (i ==# len) =
+    loop !i
+        | i == len =
             if l1 == l2
-                then (# s1, EQ #)
-                else if l1 > l2 then (# s1, GT #)
-                                else (# s1, LT #)
-        | otherwise               =
-            case readWord8Array# m1 i s1 of
-                (# s2, e1 #) -> case readWord8Array# m2 i s2 of
-                    (# s3, e2 #) ->
-                        if booleanPrim (eqWord# e1 e2)
-                            then loop (i +# 1#) s3
-                            else if booleanPrim (ltWord# e1 e2) then (# s3, LT #)
-                                                                else (# s3, GT #)
+                then pure EQ
+                else if l1 > l2 then pure GT
+                                else pure LT
+        | otherwise = do
+            e1 <- read8 m1 i
+            e2 <- read8 m2 i
+            if e1 == e2
+                then loop (i+1)
+                else if e1 < e2 then pure LT
+                                else pure GT
+
+    read8 m (I# i) = IO $ \s -> case readWord8Array# m i s of
+                                    (# s2, e #) -> (# s2, W8# e #)
 
 scrubbedFromChar8 :: [Char] -> ScrubbedBytes
 scrubbedFromChar8 l = unsafeDoIO $ scrubbedBytesAlloc len (fill l)
