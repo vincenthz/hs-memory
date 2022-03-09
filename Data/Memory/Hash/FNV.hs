@@ -24,9 +24,9 @@ module Data.Memory.Hash.FNV
     , fnv1a_64
     ) where
 
+import           Basement.Bits
+import           Basement.IntegralConv
 import           Data.Memory.Internal.Compat ()
-import           Data.Memory.Internal.CompatPrim
-import           Data.Memory.Internal.CompatPrim64
 import           Data.Memory.Internal.Imports
 import           GHC.Word
 import           GHC.Prim hiding (Word64#, Int64#)
@@ -41,66 +41,66 @@ newtype FnvHash32 = FnvHash32 Word32
 newtype FnvHash64 = FnvHash64 Word64
     deriving (Show,Eq,Ord,NFData)
 
+fnv1_32_Mix8 :: Word8 -> FnvHash32 -> FnvHash32
+fnv1_32_Mix8 !w (FnvHash32 acc) = FnvHash32 ((0x01000193 * acc) .^. integralUpsize w)
+{-# INLINE fnv1_32_Mix8 #-}
+
+fnv1a_32_Mix8 :: Word8 -> FnvHash32 -> FnvHash32
+fnv1a_32_Mix8 !w (FnvHash32 acc) = FnvHash32 (0x01000193 * (acc .^. integralUpsize w))
+{-# INLINE fnv1a_32_Mix8 #-}
+
+fnv1_64_Mix8 :: Word8 -> FnvHash64 -> FnvHash64
+fnv1_64_Mix8 !w (FnvHash64 acc) = FnvHash64 ((0x100000001b3 * acc) .^. integralUpsize w)
+{-# INLINE fnv1_64_Mix8 #-}
+
+fnv1a_64_Mix8 :: Word8 -> FnvHash64 -> FnvHash64
+fnv1a_64_Mix8 !w (FnvHash64 acc) = FnvHash64 (0x100000001b3 * (acc .^. integralUpsize w))
+{-# INLINE fnv1a_64_Mix8 #-}
+
 -- | compute FNV1 (32 bit variant) of a raw piece of memory
 fnv1 :: Ptr Word8 -> Int -> IO FnvHash32
-fnv1 (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
+fnv1 (Ptr addr) n = loop (FnvHash32 0x811c9dc5) 0
   where 
-        loop :: Word# -> Int# -> State# s -> (# State# s, FnvHash32 #)
-        loop !acc i s
-            | booleanPrim (i ==# n) = (# s, FnvHash32 $ W32# (narrow32Word# acc) #)
-            | otherwise             =
-                case readWord8OffAddr# addr i s of
-                    (# s2, v #) ->
-                        let !nacc = (0x01000193## `timesWord#` acc) `xor#` v
-                         in loop nacc (i +# 1#) s2
+        loop :: FnvHash32 -> Int -> IO FnvHash32
+        loop !acc !i
+            | i == n    = pure $ acc
+            | otherwise = do
+                v <- read8 addr i
+                loop (fnv1_32_Mix8 v acc) (i + 1)
 
 -- | compute FNV1a (32 bit variant) of a raw piece of memory
 fnv1a :: Ptr Word8 -> Int -> IO FnvHash32
-fnv1a (Ptr addr) (I# n) = IO $ \s -> loop 0x811c9dc5## 0# s
+fnv1a (Ptr addr) n = loop (FnvHash32 0x811c9dc5) 0
   where 
-        loop :: Word# -> Int# -> State# s -> (# State# s, FnvHash32 #)
-        loop !acc i s
-            | booleanPrim (i ==# n) = (# s, FnvHash32 $ W32# (narrow32Word# acc) #)
-            | otherwise             =
-                case readWord8OffAddr# addr i s of
-                    (# s2, v #) ->
-                        let !nacc = 0x01000193## `timesWord#` (acc `xor#` v)
-                         in loop nacc (i +# 1#) s2
+        loop :: FnvHash32 -> Int -> IO FnvHash32
+        loop !acc !i
+            | i == n    = pure $ acc
+            | otherwise = do
+                v <- read8 addr i
+                loop (fnv1a_32_Mix8 v acc) (i + 1)
 
 -- | compute FNV1 (64 bit variant) of a raw piece of memory
 fnv1_64 :: Ptr Word8 -> Int -> IO FnvHash64
-fnv1_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
+fnv1_64 (Ptr addr) n = loop (FnvHash64 0xcbf29ce484222325) 0
   where 
-        loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
-        loop !acc i s
-            | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
-            | otherwise             =
-                case readWord8OffAddr# addr i s of
-                    (# s2, v #) ->
-                        let !nacc = (fnv64Prime `timesWord64#` acc) `xor64#` (wordToWord64# v)
-                         in loop nacc (i +# 1#) s2
-
-        fnv64Const :: Word64#
-        !fnv64Const = w64# 0xcbf29ce484222325## 0xcbf29ce4## 0x84222325##
-
-        fnv64Prime :: Word64#
-        !fnv64Prime = w64# 0x100000001b3## 0x100## 0x000001b3##
+        loop :: FnvHash64 -> Int -> IO FnvHash64
+        loop !acc !i
+            | i == n    = pure $ acc
+            | otherwise = do
+                v <- read8 addr i
+                loop (fnv1_64_Mix8 v acc) (i + 1)
 
 -- | compute FNV1a (64 bit variant) of a raw piece of memory
 fnv1a_64 :: Ptr Word8 -> Int -> IO FnvHash64
-fnv1a_64 (Ptr addr) (I# n) = IO $ \s -> loop fnv64Const 0# s
+fnv1a_64 (Ptr addr) n = loop (FnvHash64 0xcbf29ce484222325) 0
   where 
-        loop :: Word64# -> Int# -> State# s -> (# State# s, FnvHash64 #)
-        loop !acc i s
-            | booleanPrim (i ==# n) = (# s, FnvHash64 $ W64# acc #)
-            | otherwise             =
-                case readWord8OffAddr# addr i s of
-                    (# s2, v #) ->
-                        let !nacc = fnv64Prime `timesWord64#` (acc `xor64#` wordToWord64# v)
-                         in loop nacc (i +# 1#) s2
+        loop :: FnvHash64 -> Int -> IO FnvHash64
+        loop !acc !i
+            | i == n    = pure $ acc
+            | otherwise = do
+                v <- read8 addr i
+                loop (fnv1a_64_Mix8 v acc) (i + 1)
 
-        fnv64Const :: Word64#
-        !fnv64Const = w64# 0xcbf29ce484222325## 0xcbf29ce4## 0x84222325##
-
-        fnv64Prime :: Word64#
-        !fnv64Prime = w64# 0x100000001b3## 0x100## 0x000001b3##
+read8 :: Addr# -> Int -> IO Word8
+read8 addr (I# i) = IO $ \s -> case readWord8OffAddr# addr i s of
+    (# s2, e #) -> (# s2, W8# e #)
