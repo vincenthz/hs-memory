@@ -23,10 +23,12 @@ module Data.Memory.Encoding.Base16
 
 import           Data.Memory.Internal.Compat
 import           Data.Word
-import           Data.Bits ((.|.))
+import           Basement.Bits
+import           Basement.IntegralConv
 import           GHC.Prim
 import           GHC.Types
 import           GHC.Word
+import           GHC.Char (chr)
 import           Control.Monad
 import           Foreign.Storable
 import           Foreign.Ptr (Ptr)
@@ -42,7 +44,7 @@ showHexadecimal withPtr = doChunks 0
         doChunks ofs len
             | len < 4   = doUnique ofs len
             | otherwise = do
-                let !(W8# a, W8# b, W8# c, W8# d) = unsafeDoIO $ withPtr (read4 ofs)
+                let !(a, b, c, d) = unsafeDoIO $ withPtr (read4 ofs)
                     !(# w1, w2 #) = convertByte a
                     !(# w3, w4 #) = convertByte b
                     !(# w5, w6 #) = convertByte c
@@ -54,7 +56,7 @@ showHexadecimal withPtr = doChunks 0
         doUnique ofs len
             | len == 0  = []
             | otherwise =
-                let !(W8# b)      = unsafeDoIO $ withPtr (byteIndex ofs)
+                let !b            = unsafeDoIO $ withPtr (byteIndex ofs)
                     !(# w1, w2 #) = convertByte b
                  in wToChar w1 : wToChar w2 : doUnique (ofs + 1) (len - 1)
 
@@ -63,8 +65,8 @@ showHexadecimal withPtr = doChunks 0
             liftM4 (,,,) (byteIndex ofs     p) (byteIndex (ofs+1) p)
                          (byteIndex (ofs+2) p) (byteIndex (ofs+3) p)
 
-        wToChar :: Word# -> Char
-        wToChar w = toEnum (I# (word2Int# w))
+        wToChar :: Word8 -> Char
+        wToChar w = chr (integralUpsize w)
 
         byteIndex :: Int -> Ptr Word8 -> IO Word8
         byteIndex i p = peekByteOff p i
@@ -81,19 +83,20 @@ toHexadecimal bout bin n = loop 0
   where loop i
             | i == n  = return ()
             | otherwise = do
-                (W8# w) <- peekByteOff bin i
-                let !(# w1, w2 #) = convertByte w
-                pokeByteOff bout (i * 2)     (W8# w1)
-                pokeByteOff bout (i * 2 + 1) (W8# w2)
+                !w <- peekByteOff bin i
+                let !(# !w1, !w2 #) = convertByte w
+                pokeByteOff bout (i * 2)     w1
+                pokeByteOff bout (i * 2 + 1) w2
                 loop (i+1)
 
 -- | Convert a value Word# to two Word#s containing
 -- the hexadecimal representation of the Word#
-convertByte :: Word# -> (# Word#, Word# #)
-convertByte b = (# r tableHi b, r tableLo b #)
+convertByte :: Word8 -> (# Word8, Word8 #)
+convertByte bwrap = (# r tableHi b, r tableLo b #)
   where
-        r :: Addr# -> Word# -> Word#
-        r table index = indexWord8OffAddr# table (word2Int# index)
+        !(W# b) = integralUpsize bwrap
+        r :: Addr# -> Word# -> Word8
+        r table index = W8# (indexWord8OffAddr# table (word2Int# index))
 
         !tableLo =
             "0123456789abcdef0123456789abcdef\
@@ -131,8 +134,11 @@ fromHexadecimal dst src n
                     then return $ Just i
                     else pokeByteOff dst di (a .|. b) >> loop (di+1) (i+2)
 
-        rLo (W8# index) = W8# (indexWord8OffAddr# tableLo (word2Int# index))
-        rHi (W8# index) = W8# (indexWord8OffAddr# tableHi (word2Int# index))
+        rLo, rHi :: Word8 -> Word8
+        rLo index = W8# (indexWord8OffAddr# tableLo (word2Int# widx))
+          where !(W# widx) = integralUpsize index
+        rHi index = W8# (indexWord8OffAddr# tableHi (word2Int# widx))
+          where !(W# widx) = integralUpsize index
         
         !tableLo =
                 "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
@@ -168,4 +174,3 @@ fromHexadecimal dst src n
                  \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                  \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                  \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"#
-

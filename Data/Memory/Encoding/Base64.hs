@@ -27,9 +27,9 @@ module Data.Memory.Encoding.Base64
     ) where
 
 import           Data.Memory.Internal.Compat
-import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Imports
-import           Data.Bits ((.|.))
+import           Basement.Bits
+import           Basement.IntegralConv (integralUpsize)
 import           GHC.Prim
 import           GHC.Word
 import           Foreign.Storable
@@ -91,15 +91,16 @@ toBase64Internal table dst src len padded = loop 0 0
                 loop (i+3) (di+4)
 
 convert3 :: Addr# -> Word8 -> Word8 -> Word8 -> (Word8, Word8, Word8, Word8)
-convert3 table (W8# a) (W8# b) (W8# c) =
-    let !w = narrow8Word# (uncheckedShiftRL# a 2#)
-        !x = or# (and# (uncheckedShiftL# a 4#) 0x30##) (uncheckedShiftRL# b 4#)
-        !y = or# (and# (uncheckedShiftL# b 2#) 0x3c##) (uncheckedShiftRL# c 6#)
-        !z = and# c 0x3f##
+convert3 table !a !b !c =
+    let !w = a .>>. 2
+        !x = ((a .<<. 4) .&. 0x30) .|. (b .>>. 4)
+        !y = ((b .<<. 2) .&. 0x3c) .|. (c .>>. 6)
+        !z = c .&. 0x3f
      in (index w, index x, index y, index z)
   where
-        index :: Word# -> Word8
-        index idx = W8# (indexWord8OffAddr# table (word2Int# idx))
+        index :: Word8 -> Word8
+        index !idxb = W8# (indexWord8OffAddr# table (word2Int# idx))
+          where !(W# idx) = integralUpsize idxb
 
 -- | Get the length needed for the destination buffer for a base64 decoding.
 --
@@ -210,10 +211,9 @@ fromBase64Unpadded rset dst src len = loop 0 0
                      in Right (x,y,z)
 
 rsetURL :: Word8 -> Word8
-rsetURL (W8# w)
-    | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
-    | otherwise                        = 0xff
-  where !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+rsetURL !w = W8# (indexWord8OffAddr# rsetTable (word2Int# widx))
+  where !(W# widx) = integralUpsize w
+        !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x3e\xff\xff\
                      \\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\xff\xff\xff\xff\xff\xff\
@@ -231,10 +231,9 @@ rsetURL (W8# w)
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"#
 
 rsetOpenBSD :: Word8 -> Word8
-rsetOpenBSD (W8# w)
-    | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
-    | otherwise                        = 0xff
-  where !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
+rsetOpenBSD !w = W8# (indexWord8OffAddr# rsetTable (word2Int# widx))
+  where !(W# widx) = integralUpsize w
+        !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x01\
                      \\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f\xff\xff\xff\xff\xff\xff\
@@ -308,9 +307,8 @@ fromBase64 dst src len
                      in Right (x,y,z)
 
         rset :: Word8 -> Word8
-        rset (W8# w)
-            | booleanPrim (w `leWord#` 0xff##) = W8# (indexWord8OffAddr# rsetTable (word2Int# w))
-            | otherwise                        = 0xff
+        rset !w = W8# (indexWord8OffAddr# rsetTable (word2Int# widx))
+          where !(W# widx) = integralUpsize w
 
         !rsetTable = "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
                      \\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\
