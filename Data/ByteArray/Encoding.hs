@@ -38,7 +38,7 @@ import           Data.Memory.Encoding.Base64
 -- requires a newline at least every 76 encoded characters, which works around
 -- limitations of older email programs that could not handle long lines.
 -- Be aware that other languages, such as Ruby, encode the RFC 2045 version
--- by default. To decode their ouput, remove all newlines before decoding.
+-- by default. To decode their output, remove all newlines before decoding.
 --
 -- ==== Examples
 --
