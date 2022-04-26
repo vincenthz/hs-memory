@@ -191,7 +191,7 @@ pack l = inlineUnsafeCreate @n (fill $ unListN l)
 unpack :: forall n ba
         . (ByteArrayN n ba, KnownNat n, NatWithinBound Int n, ByteArrayAccess ba)
        => ba -> ListN n Word8
-unpack bs =  fromMaybe (error "the impossible appened") $ toListN @n $ loop 0
+unpack bs =  fromMaybe (error "the impossible happened") $ toListN @n $ loop 0
   where !len = length bs
         loop i
             | i == len  = []
@@ -340,7 +340,7 @@ copyRet bs f =
         withByteArray bs $ \s -> memCopy d s (length bs)
         f (castPtr d)
 
--- | Similiar to 'copy' but expect the resulting bytearray in a pure context
+-- | Similar to 'copy' but expect the resulting bytearray in a pure context
 copyAndFreeze :: forall n bs1 bs2 p
                . ( ByteArrayN n bs1, ByteArrayN n bs2
                  , ByteArrayAccess bs1

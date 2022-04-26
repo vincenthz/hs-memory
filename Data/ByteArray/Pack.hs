@@ -113,7 +113,7 @@ fillUpWith s = fillList $ repeat s
 -- > > pack (fillList $ [1..] :: Word32) 4
 -- > "\1\0\0\0"
 -- > > pack (fillList $ [1..] :: Word32) 64
--- > .. <..succesful..>
+-- > .. <..successful..>
 -- > > pack (fillList $ [1..] :: Word32) 1
 -- > .. <.. not enough space ..>
 -- > > pack (fillList $ [1..] :: Word32) 131

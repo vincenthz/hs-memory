@@ -232,7 +232,7 @@ copyRet bs f =
         copyByteArrayToPtr bs d
         f (castPtr d)
 
--- | Similiar to 'copy' but expect the resulting bytearray in a pure context
+-- | Similar to 'copy' but expect the resulting bytearray in a pure context
 copyAndFreeze :: (ByteArrayAccess bs1, ByteArray bs2) => bs1 -> (Ptr p -> IO ()) -> bs2
 copyAndFreeze bs f =
     inlineUnsafeCreate (length bs) $ \d -> do

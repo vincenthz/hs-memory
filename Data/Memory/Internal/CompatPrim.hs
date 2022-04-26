@@ -58,7 +58,7 @@ byteswap32Prim w =
 #endif
 
 -- | Simple wrapper to handle pre 7.8 and future, where
--- most comparaison functions don't returns a boolean
+-- most comparison functions don't return a boolean
 -- anymore.
 #if __GLASGOW_HASKELL__ >= 708
 booleanPrim :: Int# -> Bool
