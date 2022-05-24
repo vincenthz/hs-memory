@@ -63,9 +63,7 @@ type OutBool = Bool
 type Word64# = Word#
 type Int64# = Int#
 
-#if __GLASGOW_HASKELL__ >= 904
-
-#else
+#if __GLASGOW_HASKELL__ < 904
 eqWord64# :: Word64# -> Word64# -> OutBool
 eqWord64# = eqWord#
 
