@@ -1,0 +1,9 @@
+packages: .
+
+source-repository-package
+    type: git
+    location: https://github.com/parsonsmatt/foundation
+    tag: 688c32ccd9a951bc96dd09423a6e6684f091d510
+    subdir: basement
+    subdir: foundation
+

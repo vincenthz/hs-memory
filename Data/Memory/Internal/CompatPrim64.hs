@@ -63,6 +63,9 @@ type OutBool = Bool
 type Word64# = Word#
 type Int64# = Int#
 
+#if __GLASGOW_HASKELL__ >= 904
+
+#else
 eqWord64# :: Word64# -> Word64# -> OutBool
 eqWord64# = eqWord#
 
@@ -143,6 +146,7 @@ word64ToWord# w = w
 
 timesWord64# :: Word64# -> Word64# -> Word64#
 timesWord64# = timesWord#
+#endif
 
 w64# :: Word# -> Word# -> Word# -> Word64#
 w64# w _ _ = w
