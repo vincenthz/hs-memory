@@ -1,5 +1,5 @@
 Name:                memory
-version:             0.17.0
+version:             0.18.0
 Synopsis:            memory and related abstraction stuff
 Description:
     Chunk of memory, polymorphic byte array management and manipulation
@@ -69,7 +69,7 @@ Library
                      Data.ByteArray.Methods
                      Data.ByteArray.MemView
                      Data.ByteArray.View
-  if impl(ghc < 8.0)
+  if impl(ghc < 8.8)
     buildable: False
   else
     build-depends:   base
@@ -106,7 +106,7 @@ Test-Suite test-memory
   Other-modules:     Imports
                      SipHash
                      Utils
-  if impl(ghc < 8.0)
+  if impl(ghc < 8.8)
     buildable: False
   else
     build-depends:   base

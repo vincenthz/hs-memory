@@ -1,3 +1,10 @@
+## 0.18
+
+* drop support for ghc < 8.8
+* compat with ghc 9.4
+
+## ...
+
 ## 0.14.18
 
 * Branch/Release Snafu
