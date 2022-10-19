@@ -16,10 +16,9 @@ module Data.Memory.Endian
     , ByteSwap
     ) where
 
-import Data.Word (Word16, Word32, Word64)
+import Data.Word (Word8, Word16, Word32, Word64)
 import Foreign.Storable
 #if !defined(ARCH_IS_LITTLE_ENDIAN) && !defined(ARCH_IS_BIG_ENDIAN)
-import Data.Word (Word8)
 import Data.Memory.Internal.Compat (unsafeDoIO)
 import Foreign.Marshal.Alloc
 import Foreign.Ptr
@@ -113,6 +112,9 @@ fromLE (LE a) = if getSystemEndianness == LittleEndian then a else byteSwap a
 -- e.g. Word16, Word32, Word64
 class Storable a => ByteSwap a where
     byteSwap :: a -> a
+
+instance ByteSwap Word8 where
+    byteSwap = id
 instance ByteSwap Word16 where
     byteSwap = byteSwap16
 instance ByteSwap Word32 where
