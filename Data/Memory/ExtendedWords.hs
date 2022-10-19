@@ -14,7 +14,8 @@ module Data.Memory.ExtendedWords
 import Data.Word (Word64)
 import Foreign (Storable(..), Ptr, plusPtr, castPtr)
 
-import Data.Memory.Endian (Endianness(..), getSystemEndianness)
+import Data.Memory.Endian (Endianness(..), getSystemEndianness, ByteSwap(..))
+import Data.Memory.Internal.Compat (byteSwap64)
 
 -- | A simple Extended Word128 composed of 2 Word64
 --
@@ -46,3 +47,9 @@ splitPtr ptr =
     case getSystemEndianness of
       BigEndian    -> (castPtr ptr, castPtr ptr `plusPtr` 8)
       LittleEndian -> (castPtr ptr `plusPtr` 8, castPtr ptr)
+
+byteSwap128 :: Word128 -> Word128
+byteSwap128 (Word128 r1 r2) = Word128 (byteSwap64 r2) (byteSwap64 r1)
+
+instance ByteSwap Word128 where
+  byteSwap = byteSwap128

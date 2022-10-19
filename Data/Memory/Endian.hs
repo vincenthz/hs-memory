@@ -13,7 +13,7 @@ module Data.Memory.Endian
     , BE(..), LE(..)
     , fromBE, toBE
     , fromLE, toLE
-    , ByteSwap
+    , ByteSwap(..)
     ) where
 
 import Data.Word (Word8, Word16, Word32, Word64)
