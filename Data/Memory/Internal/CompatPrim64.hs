@@ -37,7 +37,11 @@ module Data.Memory.Internal.CompatPrim64
     , or64#
     , xor64#
     , not64#
+#if WORD_SIZE_IN_BITS == 32
+    , GHC.Exts.timesWord64#
+#else
     , timesWord64#
+#endif
     , uncheckedShiftL64#
     , uncheckedShiftRL64#
 
@@ -150,7 +154,7 @@ w64# :: Word# -> Word# -> Word# -> Word64#
 w64# w _ _ = w
 
 #elif WORD_SIZE_IN_BITS == 32
-import GHC.IntWord64
+import GHC.Exts
 import GHC.Prim (Word#)
 
 timesWord64# :: Word64# -> Word64# -> Word64#
