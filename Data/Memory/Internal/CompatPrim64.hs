@@ -150,6 +150,7 @@ w64# :: Word# -> Word# -> Word# -> Word64#
 w64# w _ _ = w
 
 #elif WORD_SIZE_IN_BITS == 32
+#if __GLASGOW_HASKELL__ < 904
 import GHC.IntWord64
 import GHC.Prim (Word#)
 
@@ -158,6 +159,9 @@ timesWord64# a b =
     let !ai = word64ToInt64# a
         !bi = word64ToInt64# b
      in int64ToWord64# (timesInt64# ai bi)
+#else
+import GHC.Prim
+#endif
 
 w64# :: Word# -> Word# -> Word# -> Word64#
 w64# _ hw lw =
